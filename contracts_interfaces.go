@@ -75,6 +75,7 @@ type Serializer interface {
 var (
 	// ErrDeserializationFailure indicates that there was some kind of problem deserializing the request stream.
 	ErrDeserializationFailure = errors.New("failed to deserialize the stream into the instance provided")
+
 	// ErrSerializationFailure indicates that there was some kind of problem serializing the structure to the response stream.
 	ErrSerializationFailure = errors.New("failed to serialize the instance into the stream provided")
 )
@@ -82,9 +83,6 @@ var (
 const (
 	mimeTypeApplicationJSON     = "application/json"
 	mimeTypeApplicationJSONUTF8 = mimeTypeApplicationJSON + characterSetUTF8
-
-	mimeTypeApplicationXML     = "application/xml"
-	mimeTypeApplicationXMLUTF8 = mimeTypeApplicationXML + characterSetUTF8
 
 	characterSetUTF8 = "; charset=utf-8"
 
