@@ -9,9 +9,9 @@ import (
 
 // InputModel represents user input from the HTTP request. Generally speaking, each type represents an operation,
 // intention, or instruction. Each intention or operation should be a separate, well-named structure. By design in this
-// library, each will be reusable and long lived.
+// library, each instance will be reusable and long lived.
 //
-// As a best practice, design note, and to assert application correctness, the fields of any given input model should be
+// As a best practice or design note and to assert application correctness, the fields of any given InputModel should be
 // explicitly initialized and populated using garbage or junk values to ensure they are properly Reset.
 type InputModel interface {
 	// Reset clears the contents of the instance and prepares it for the next use.
@@ -27,7 +27,7 @@ type InputModel interface {
 
 // Reader provides the ability to read values from the incoming HTTP request and to either manipulate the associated
 // InputModel in some fashion or to otherwise short-circuit the request pipeline by returning a result to be rendered
-// the caller's HTTP response stream.
+// the caller's HTTP response stream. If a nil (meaning successful) result is returned, then processing continues.
 type Reader interface {
 	Read(InputModel, *http.Request) interface{}
 }
