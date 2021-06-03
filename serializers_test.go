@@ -21,3 +21,24 @@ func TestJSONDeserializer_ReturnError(t *testing.T) {
 	Assert(t).That(err).Equals(ErrDeserializationFailure)
 	Assert(t).That(value).Equals("")
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func TestJSONSerializer(t *testing.T) {
+	serializer := newJSONSerializer()
+	buffer := bytes.NewBufferString("")
+
+	err := serializer.Serialize(buffer, "hello")
+
+	Assert(t).That(err).IsNil()
+	Assert(t).That(buffer.String()).Equals(`"hello"` + "\n")
+}
+func TestJSONSerializer_Failure(t *testing.T) {
+	serializer := newJSONSerializer()
+	buffer := bytes.NewBufferString("")
+
+	err := serializer.Serialize(buffer, make(chan string))
+
+	Assert(t).That(err).Equals(ErrSerializationFailure)
+	Assert(t).That(buffer.Len()).Equals(0)
+}

@@ -25,3 +25,27 @@ func (this *jsonDeserializer) Deserialize(target interface{}, source io.Reader) 
 
 	return nil
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type jsonSerializer struct {
+	encoder *json.Encoder
+	target  struct{ io.Writer }
+}
+
+func newJSONSerializer() Serializer {
+	this := &jsonSerializer{}
+	this.encoder = json.NewEncoder(&this.target)
+	return this
+}
+
+func (this *jsonSerializer) Serialize(target io.Writer, source interface{}) error {
+	this.target.Writer = target
+
+	if err := this.encoder.Encode(source); err != nil {
+		return ErrSerializationFailure
+	}
+
+	return nil
+}
+func (this *jsonSerializer) ContentType() string { return mimeTypeApplicationJSONUTF8 }
