@@ -20,10 +20,10 @@ func newAcceptReader(serializerFactories map[string]func() Serializer, result *T
 }
 
 func (this *acceptReader) Read(_ InputModel, request *http.Request) interface{} {
-	if normalized, found := this.findAcceptType(request.Header["Accept"]); !found {
+	if normalized, found := this.findAcceptType(request.Header[headerAccept]); !found {
 		return this.result
 	} else {
-		request.Header["Accept"] = normalized
+		request.Header[headerAccept] = normalized
 	}
 
 	return nil
@@ -44,9 +44,9 @@ func (this *acceptReader) findAcceptType(acceptTypes []string) ([]string, bool) 
 				item = value
 			}
 
-			if item = strings.TrimSpace(item); item == "*/*" {
+			if item = strings.TrimSpace(item); item == headerAcceptAnyValue {
 				return nil, true // default
-			} else if types, contains := this.acceptable[normalizeContentType(item)]; contains {
+			} else if types, contains := this.acceptable[normalizeMediaType(item)]; contains {
 				return types, true
 			} else if index == -1 {
 				break
@@ -56,7 +56,7 @@ func (this *acceptReader) findAcceptType(acceptTypes []string) ([]string, bool) 
 
 	return nil, false
 }
-func normalizeContentType(value string) string {
+func normalizeMediaType(value string) string {
 	if index := strings.Index(value, ";"); index >= 0 {
 		value = value[0:index]
 	}

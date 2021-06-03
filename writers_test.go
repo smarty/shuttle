@@ -80,6 +80,10 @@ func TestWrite(t *testing.T) {
 			Accept:       "application/not-acceptable", // use default serializer
 			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/json; charset=utf-8"}, Body: "{body}"}},
 
+		{Input: &SerializeResult{StatusCode: 200, ContentType: "", Content: "body"},
+			Accept:       "application/xml;q=0.8", // simplify and use correct serializer
+			HTTPResponse: HTTPResponse{StatusCode: 200, ContentType: []string{"application/xml; charset=utf-8"}, Body: "{body}"}},
+
 		{Input: 42, // use serializer for unknown type
 			HTTPResponse: HTTPResponse{StatusCode: 200, ContentType: []string{"application/json; charset=utf-8"}, Body: "{42}"}},
 	}

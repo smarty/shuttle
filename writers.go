@@ -96,7 +96,7 @@ func (this *defaultWriter) writeStreamResult(response http.ResponseWriter, typed
 func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, request *http.Request, typed *SerializeResult) {
 	hasContent := typed.Content != nil
 
-	serializer := this.loadSerializer(request.Header["Accept"])
+	serializer := this.loadSerializer(request.Header[headerAccept])
 	contentType := typed.ContentType
 	if len(contentType) == 0 {
 		contentType = serializer.ContentType()
@@ -109,8 +109,7 @@ func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, re
 }
 func (this *defaultWriter) loadSerializer(acceptTypes []string) Serializer {
 	for _, acceptType := range acceptTypes {
-		// TODO: acceptType = normalizeContentType(acceptType) // and associated test
-		if serializer, contains := this.serializers[acceptType]; contains {
+		if serializer, contains := this.serializers[normalizeMediaType(acceptType)]; contains {
 			return serializer
 		}
 	}
@@ -139,7 +138,7 @@ func writeBoolResult(response http.ResponseWriter, typed bool) {
 func (this *defaultWriter) writeHeader(response http.ResponseWriter, statusCode int, contentType string, hasContent bool) {
 	if hasContent && len(contentType) > 0 {
 		this.headerBuffer[0] = contentType
-		response.Header()["Content-Type"] = this.headerBuffer
+		response.Header()[headerContentType] = this.headerBuffer
 	}
 
 	if statusCode > 0 {
