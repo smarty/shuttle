@@ -6,14 +6,25 @@ import (
 )
 
 type defaultWriter struct {
-	bodyBuffer   []byte
-	headerBuffer []string
+	serializers       map[string]Serializer
+	defaultSerializer Serializer
+	bodyBuffer        []byte
+	headerBuffer      []string
+	serializeBuffer   *SerializeResult
 }
 
-func newWriter(serializers map[string]func() Serializer) Writer {
+func newWriter(serializerFactories map[string]func() Serializer) Writer {
+	serializers := make(map[string]Serializer, len(serializerFactories))
+	for acceptType, callback := range serializerFactories {
+		serializers[acceptType] = callback()
+	}
+
 	return &defaultWriter{
-		bodyBuffer:   make([]byte, 1024*4),
-		headerBuffer: make([]string, 1),
+		serializers:       serializers,
+		defaultSerializer: serializers[""],
+		bodyBuffer:        make([]byte, 1024*4),
+		headerBuffer:      make([]string, 1),
+		serializeBuffer:   &SerializeResult{},
 	}
 }
 
@@ -43,12 +54,21 @@ func (this *defaultWriter) write(response http.ResponseWriter, request *http.Req
 	case StreamResult:
 		this.writeStreamResult(response, &typed)
 
+	case *SerializeResult:
+		this.writeSerializeResult(response, request, typed)
+	case SerializeResult:
+		this.writeSerializeResult(response, request, &typed)
+
 	case string:
 		writeStringResult(response, typed)
 	case []byte:
 		writeByteResult(response, typed)
 	case bool:
 		writeBoolResult(response, typed)
+
+	default:
+		this.serializeBuffer.Content = result
+		this.writeSerializeResult(response, request, this.serializeBuffer)
 	}
 }
 
@@ -72,6 +92,30 @@ func (this *defaultWriter) writeStreamResult(response http.ResponseWriter, typed
 	if hasContent {
 		_, _ = io.CopyBuffer(response, typed.Content, this.bodyBuffer)
 	}
+}
+func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, request *http.Request, typed *SerializeResult) {
+	hasContent := typed.Content != nil
+
+	serializer := this.loadSerializer(request.Header["Accept"])
+	contentType := typed.ContentType
+	if len(contentType) == 0 {
+		contentType = serializer.ContentType()
+	}
+
+	this.writeHeader(response, typed.StatusCode, contentType, hasContent)
+	if hasContent {
+		_ = this.defaultSerializer.Serialize(response, typed.Content)
+	}
+}
+func (this *defaultWriter) loadSerializer(acceptTypes []string) Serializer {
+	for _, acceptType := range acceptTypes {
+		// TODO: acceptType = normalizeContentType(acceptType) // and associated test
+		if serializer, contains := this.serializers[acceptType]; contains {
+			return serializer
+		}
+	}
+
+	return this.defaultSerializer
 }
 
 func writeStringResult(response http.ResponseWriter, typed string) {
