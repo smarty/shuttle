@@ -66,7 +66,45 @@ func normalizeMediaType(value string) string {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// deserializeReader
+type deserializeReader struct {
+	available                  map[string]Deserializer
+	unsupportedMediaTypeResult interface{}
+	result                     func(error) interface{}
+}
+
+func newDeserializeReader(deserializerFactories map[string]func() Deserializer, unsupportedMediaTypeResult interface{}, result func(error) interface{}) Reader {
+	available := make(map[string]Deserializer, len(deserializerFactories))
+	for contentType, factory := range deserializerFactories {
+		available[contentType] = factory()
+	}
+
+	return &deserializeReader{
+		available:                  available,
+		unsupportedMediaTypeResult: unsupportedMediaTypeResult,
+		result:                     result,
+	}
+}
+
+func (this *deserializeReader) Read(input InputModel, request *http.Request) interface{} {
+	if deserializer := this.loadDeserializer(request.Header[headerContentType]); deserializer == nil {
+		return this.unsupportedMediaTypeResult
+	} else if err := deserializer.Deserialize(input, request.Body); err != nil {
+		return this.result(err)
+	}
+
+	return nil
+}
+func (this *deserializeReader) loadDeserializer(contentTypes []string) Deserializer {
+	for _, contentType := range contentTypes {
+		if len(contentType) == 0 {
+			continue
+		} else if deserializer, contains := this.available[normalizeMediaType(contentType)]; contains {
+			return deserializer
+		}
+	}
+
+	return nil
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

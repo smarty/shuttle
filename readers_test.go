@@ -2,6 +2,7 @@ package shuttle
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -45,8 +46,46 @@ func assertAcceptReader(t *testing.T, expectedResult string, acceptTypes, accept
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func TestDeserializeReader(t *testing.T) {
-	// TODO
+func TestDeserializeReader_NoContentType_ReturnFailure(t *testing.T) {
+	assertDeserializeReader(t, "unsupported-media-type", nil, nil)
+}
+func TestDeserializeReader_UnknownContentType_ReturnFailure(t *testing.T) {
+	assertDeserializeReader(t, "unsupported-media-type", []string{"application/garbage"}, nil)
+}
+func TestDeserializeReader_DeserializationFailure_ReturnFailure(t *testing.T) {
+	assertDeserializeReader(t, "unsupported-media-type", []string{"application/json"}, errors.New("fail"))
+}
+func TestDeserializeReader_KnownContentType_Success(t *testing.T) {
+	assertDeserializeReader(t, nil, []string{"application/json"}, nil)
+}
+func TestDeserializeReader_KnownAdvancedContentType_Success(t *testing.T) {
+	assertDeserializeReader(t, nil, []string{"application/json; charset=utf-8"}, nil)
+}
+func assertDeserializeReader(t *testing.T, expectedResult interface{}, contentTypes []string, deserializeError error) {
+	input := &TestInputModel{}
+	request := httptest.NewRequest("GET", "/", nil)
+	request.Header["Content-Type"] = contentTypes
+
+	var errToCallback error
+	callback := func(err error) interface{} {
+		errToCallback = err
+		return expectedResult
+	}
+	deserializer := &TestDeserializer{err: deserializeError}
+	factories := map[string]func() Deserializer{
+		"application/json": func() Deserializer { return deserializer },
+	}
+
+	reader := newDeserializeReader(factories, "unsupported-media-type", callback)
+	result := reader.Read(input, request)
+
+	if result != "unsupported-media-type" {
+		Assert(t).That(request.Body).Equals(deserializer.source)
+		Assert(t).That(input).Equals(deserializer.target)
+	}
+
+	Assert(t).That(result).Equals(expectedResult)
+	Assert(t).That(errToCallback).Equals(deserializeError)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,4 +151,18 @@ func (this *TestInputModel) Validate(errs []error) int {
 	}
 
 	return len(this.validationErrors)
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type TestDeserializer struct {
+	source io.Reader
+	target interface{}
+	err    error
+}
+
+func (this *TestDeserializer) Deserialize(target interface{}, source io.Reader) error {
+	this.target = target
+	this.source = source
+	return this.err
 }
