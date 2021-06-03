@@ -32,6 +32,7 @@ func TestJSONSerializer(t *testing.T) {
 
 	Assert(t).That(err).IsNil()
 	Assert(t).That(buffer.String()).Equals(`"hello"` + "\n")
+	Assert(t).That(serializer.ContentType()).Equals("application/json; charset=utf-8")
 }
 func TestJSONSerializer_Failure(t *testing.T) {
 	serializer := newJSONSerializer()
