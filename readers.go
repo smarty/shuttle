@@ -96,9 +96,7 @@ func (this *deserializeReader) Read(input InputModel, request *http.Request) int
 }
 func (this *deserializeReader) loadDeserializer(contentTypes []string) Deserializer {
 	for _, contentType := range contentTypes {
-		if len(contentType) == 0 {
-			continue
-		} else if deserializer, contains := this.available[normalizeMediaType(contentType)]; contains {
+		if deserializer, contains := this.available[normalizeMediaType(contentType)]; contains {
 			return deserializer
 		}
 	}
