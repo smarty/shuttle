@@ -14,7 +14,7 @@ type configuration struct {
 	Bind                        bool
 	Validate                    bool
 	MaxValidationErrors         int
-	Readers                     []Reader // TODO: everything else is a callback
+	Readers                     []func() Reader
 	Writer                      func() Writer
 	UnsupportedMediaTypeResult  interface{}
 	DeserializationFailedResult func(error) interface{}
@@ -25,7 +25,13 @@ type configuration struct {
 
 func newHandlerFromOptions(options []Option) http.Handler {
 	config := newConfig(options)
-	return newHandler(config.InputModel(), config.Readers, config.Processor(), config.Writer())
+
+	readers := make([]Reader, 0, len(config.Readers))
+	for _, readerFactory := range config.Readers {
+		readers = append(readers, readerFactory())
+	}
+
+	return newHandler(config.InputModel(), readers, config.Processor(), config.Writer())
 }
 
 func newConfig(options []Option) configuration {
@@ -183,25 +189,26 @@ func (singleton) apply(options ...Option) Option {
 		}
 
 		if this.VerifyAcceptHeader {
-			this.Readers = append(this.Readers, newAcceptReader(this.Serializers, this.NotAcceptableResult))
+			this.Readers = append(this.Readers, func() Reader { return newAcceptReader(this.Serializers, this.NotAcceptableResult) })
 		}
 
 		if len(this.Deserializers) > 0 {
-			this.Readers = append(this.Readers, newDeserializeReader(this.Deserializers, this.UnsupportedMediaTypeResult, this.DeserializationFailedResult))
+			this.Readers = append(this.Readers, func() Reader {
+				return newDeserializeReader(this.Deserializers, this.UnsupportedMediaTypeResult, this.DeserializationFailedResult)
+			})
 		}
 
 		if this.Bind {
-			this.Readers = append(this.Readers, newBindReader(this.BindFailedResult))
+			this.Readers = append(this.Readers, func() Reader { return newBindReader(this.BindFailedResult) })
 		}
 
 		if this.Validate {
-			this.Readers = append(this.Readers, newValidateReader(this.ValidationFailedResult, this.MaxValidationErrors))
+			this.Readers = append(this.Readers, func() Reader { return newValidateReader(this.ValidationFailedResult, this.MaxValidationErrors) })
 		}
 
 		if this.Writer == nil {
 			this.Writer = func() Writer { return newWriter(this.Serializers) }
 		}
-
 	}
 }
 func (singleton) defaults(options ...Option) []Option {
