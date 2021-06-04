@@ -116,13 +116,13 @@ func (singleton) VerifyAcceptHeader(value bool) Option {
 	return func(this *configuration) { this.VerifyAcceptHeader = value }
 }
 
-// Bind indicates whether or not to forward the raw HTTP request into the input model to bind parts of the request onto
-// a pooled instanced of the input model configured for this route.
+// Bind indicates whether or not to forward the raw HTTP request into the InputModel to bind parts of the request onto
+// a pooled instanced of the InputModel configured for this route.
 func (singleton) Bind(value bool) Option {
 	return func(this *configuration) { this.Bind = value }
 }
 
-// Validate indicates whether or not ask the pool instance of the input model associated with this request if it is in a
+// Validate indicates whether or not ask the pool instance of the InputModel associated with this request if it is in a
 // valid state.
 func (singleton) Validate(value bool) Option {
 	return func(this *configuration) { this.Validate = value }
@@ -130,7 +130,7 @@ func (singleton) Validate(value bool) Option {
 
 // MaxValidationErrors indicates the number of unique slots to pre-allocate to receive errors with the pooled input
 // model associated with this route. It is suggested to set this value to a large enough number to be able to
-// accommodate the maximum number of errors possible for the input model associated with this route.
+// accommodate the maximum number of errors possible for the InputModel associated with this route.
 func (singleton) MaxValidationErrors(value uint16) Option {
 	return func(this *configuration) { this.MaxValidationErrors = int(value) }
 }
