@@ -22,7 +22,7 @@ func TestShuttleDeserialize(t *testing.T) {
 	request := httptest.NewRequest("GET", "/", bytes.NewBufferString(`{"name":"name-here"}`))
 	request.Header["Content-Type"] = []string{"application/json"}
 	handler := NewHandler(
-		Options.InputModel(func() InputModel { return &TestDeserializeInputModel{Name: "garbage"} }),
+		Options.InputModel(func() InputModel { return &FakeDeserializeInputModel{Name: "garbage"} }),
 		Options.DeserializeJSON(true),
 	)
 
@@ -35,7 +35,7 @@ func TestShuttleSkipSerialization(t *testing.T) {
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", "/", bytes.NewBufferString(`{"name":"name-here"}`))
 	handler := NewHandler(
-		Options.InputModel(func() InputModel { return &TestDeserializeInputModel{Name: "garbage"} }),
+		Options.InputModel(func() InputModel { return &FakeDeserializeInputModel{Name: "garbage"} }),
 		Options.DeserializeJSON(false),
 		Options.SerializeJSON(false),
 	)
@@ -49,7 +49,7 @@ func TestShuttleDeserializationFailure(t *testing.T) {
 	request := httptest.NewRequest("GET", "/", bytes.NewBufferString(`{`))
 	request.Header["Content-Type"] = []string{"application/json"}
 	handler := NewHandler(
-		Options.InputModel(func() InputModel { return &TestDeserializeInputModel{Name: "garbage"} }),
+		Options.InputModel(func() InputModel { return &FakeDeserializeInputModel{Name: "garbage"} }),
 		Options.DeserializeJSON(true),
 		// Options.DefaultSerializer(nil),
 		// Options.DefaultSerializer(func() Serializer { return newJSONSerializer() }),
@@ -65,7 +65,7 @@ func TestShuttleBindFailure(t *testing.T) {
 	request := httptest.NewRequest("GET", "/", bytes.NewBufferString(`{"name":"value"}`))
 	request.Header["Content-Type"] = []string{"application/json"}
 	handler := NewHandler(
-		Options.InputModel(func() InputModel { return &TestDeserializeInputModel{Name: "garbage", bindFailure: errors.New("")} }),
+		Options.InputModel(func() InputModel { return &FakeDeserializeInputModel{Name: "garbage", bindFailure: errors.New("")} }),
 		Options.DeserializeJSON(true),
 	)
 
@@ -79,7 +79,7 @@ func TestShuttleValidationFailure(t *testing.T) {
 	request := httptest.NewRequest("GET", "/", bytes.NewBufferString(`{"name":"value"}`))
 	request.Header["Content-Type"] = []string{"application/json"}
 	handler := NewHandler(
-		Options.InputModel(func() InputModel { return &TestDeserializeInputModel{Name: "garbage", validationFailure: 1} }),
+		Options.InputModel(func() InputModel { return &FakeDeserializeInputModel{Name: "garbage", validationFailure: 1} }),
 		Options.DeserializeJSON(true),
 	)
 
@@ -88,12 +88,16 @@ func TestShuttleValidationFailure(t *testing.T) {
 	Assert(t).That(response.Code).Equals(422)
 }
 
-type TestDeserializeInputModel struct {
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type FakeDeserializeInputModel struct {
 	Name              string `json:"name"`
 	bindFailure       error
 	validationFailure int
 }
 
-func (this *TestDeserializeInputModel) Reset()                   { this.Name = "" }
-func (this *TestDeserializeInputModel) Bind(*http.Request) error { return this.bindFailure }
-func (this *TestDeserializeInputModel) Validate([]error) int     { return this.validationFailure }
+func (this *FakeDeserializeInputModel) Reset()                   { this.Name = "" }
+func (this *FakeDeserializeInputModel) Bind(*http.Request) error { return this.bindFailure }
+func (this *FakeDeserializeInputModel) Validate([]error) int     { return this.validationFailure }
