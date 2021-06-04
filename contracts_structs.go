@@ -1,6 +1,10 @@
 package shuttle
 
-import "io"
+import (
+	"encoding/json"
+	"io"
+	"net/http"
+)
 
 // TextResult provides the ability render a result which contains text.
 type TextResult struct {
@@ -69,4 +73,51 @@ type InputError struct {
 	Message string `json:"message,omitempty"`
 }
 
+type ErrorResult struct {
+	Errors []InputError `json:"errors"`
+}
+
 func (this InputError) Error() string { return this.Message }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var (
+	unsupportedMediaTypeResult = &SerializeResult{
+		StatusCode: http.StatusUnsupportedMediaType,
+		Content: ErrorResult{Errors: []InputError{{
+			Fields:  []string{"header:Content-Type"},
+			Name:    "invalid-content-type-header",
+			Message: "The content type specified, if any, was not recognized.",
+		}}},
+	}
+	deserializationResult = &SerializeResult{
+		StatusCode: http.StatusBadRequest,
+		Content: ErrorResult{Errors: []InputError{{
+			Fields:  []string{"body"},
+			Name:    "malformed-request-payload",
+			Message: "The body did not contain well-formed data and could not be properly deserialized.",
+		}}},
+	}
+	bindFailedResult = &SerializeResult{
+		StatusCode: http.StatusBadRequest,
+		Content: ErrorResult{Errors: []InputError{{
+			Fields:  []string{"body"},
+			Name:    "malformed-request-payload",
+			Message: "Unable to bind the HTTP request values onto the appropriate data structure.",
+		}}},
+	}
+	notAcceptableResult = &TextResult{
+		StatusCode:  http.StatusNotAcceptable,
+		ContentType: mimeTypeApplicationJSONUTF8,
+		Content: _serializeJSON(ErrorResult{Errors: []InputError{{
+			Fields:  []string{"header:Accept"},
+			Name:    "invalid-accept-header",
+			Message: "Unable to represent the application results using the Accept type.",
+		}}}),
+	}
+)
+
+func _serializeJSON(instance interface{}) string {
+	raw, _ := json.Marshal(instance)
+	return string(raw)
+}

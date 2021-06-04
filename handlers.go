@@ -1,6 +1,29 @@
 package shuttle
 
-import "net/http"
+import (
+	"net/http"
+	"sync"
+)
+
+type poolHandler struct{ pool *sync.Pool }
+
+func NewHandler(options ...Option) http.Handler {
+	pool := &sync.Pool{New: func() interface{} {
+		// The config is a "shared nothing" style wherein each handler gets its own configuration values which include
+		// callbacks to stateful error writers and stateful serializers.
+		return newHandlerFromOptions(options)
+	}}
+
+	return &poolHandler{pool: pool}
+}
+
+func (this *poolHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	handler := this.pool.Get().(http.Handler)
+	defer this.pool.Put(handler)
+	handler.ServeHTTP(response, request)
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type defaultHandler struct {
 	input     InputModel
