@@ -32,6 +32,7 @@ type BinaryResult struct {
 	Content []byte
 }
 
+// StreamResult provides the ability render a result which is streamed from another source.
 type StreamResult struct {
 
 	// StatusCode, if provided, use this value, otherwise HTTP 200.
@@ -44,6 +45,7 @@ type StreamResult struct {
 	Content io.Reader
 }
 
+// SerializeResult provides the ability render a serialized result.
 type SerializeResult struct {
 
 	// StatusCode, if provided, use this value, otherwise HTTP 200.
@@ -56,9 +58,19 @@ type SerializeResult struct {
 	Content interface{}
 }
 
-type FixedContentResult struct{ ContentResult }
-type bindErrorResult struct{ *SerializeResult }
-type validationErrorResult struct{ *SerializeResult }
+// JSONPResult provides the ability render a JSON-P result to the response.
+type JSONPResult struct {
+	// StatusCode, if provided, use this value, otherwise HTTP 200.
+	StatusCode int
+
+	// ContentType, if provided, use this value.
+	ContentType string
+
+	// Content, if provided, use this value, otherwise no content will be written to the response stream.
+	Content interface{}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // InputError represents some kind of problem with the calling HTTP request.
 type InputError struct {
@@ -84,13 +96,19 @@ type InputErrors struct {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type fixedContentResult struct{ ContentResult }
+type bindErrorResult struct{ *SerializeResult }
+type validationErrorResult struct{ *SerializeResult }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 func (this InputError) Error() string { return this.Message }
 
 func (this *SerializeResult) SetContent(value interface{}) { this.Content = value }
 func (this *SerializeResult) Result() interface{}          { return this }
 
-func (this *FixedContentResult) SetContent(interface{}) {} // no-op
-func (this *FixedContentResult) Result() interface{}    { return this.ContentResult }
+func (this *fixedContentResult) SetContent(interface{}) {} // no-op
+func (this *fixedContentResult) Result() interface{}    { return this.ContentResult }
 
 func (this *bindErrorResult) SetContent(value interface{}) {
 	inputErrors := this.SerializeResult.Content.(*InputErrors)
@@ -135,7 +153,7 @@ var (
 		},
 	}
 	deserializationResultFactory = func() ContentResult {
-		return &FixedContentResult{
+		return &fixedContentResult{
 			ContentResult: &SerializeResult{
 				StatusCode: http.StatusBadRequest,
 				Content: InputErrors{

@@ -111,6 +111,9 @@ const (
 	mimeTypeApplicationJSON     = "application/json"
 	mimeTypeApplicationJSONUTF8 = mimeTypeApplicationJSON + characterSetUTF8
 
+	mimeTypeApplicationJavascript     = "application/javascript"
+	mimeTypeApplicationJavascriptUTF8 = mimeTypeApplicationJavascript + characterSetUTF8
+
 	characterSetUTF8 = "; charset=utf-8"
 
 	headerContentType    = "Content-Type"
@@ -118,4 +121,8 @@ const (
 	headerAcceptAnyValue = "*/*"
 
 	defaultSerializerContentType = ""
+)
+
+var (
+	headerAcceptTypeJavascription = []string{mimeTypeApplicationJavascript}
 )

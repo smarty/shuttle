@@ -61,6 +61,11 @@ func (this *defaultWriter) write(response http.ResponseWriter, request *http.Req
 	case SerializeResult:
 		this.responseStatus(this.writeSerializeResult(response, request, &typed))
 
+	case *JSONPResult:
+		this.responseStatus(this.writeJSONPResult(response, request, typed))
+	case JSONPResult:
+		this.responseStatus(this.writeJSONPResult(response, request, &typed))
+
 	case string:
 		this.responseStatus(this.writeStringResult(response, typed))
 	case []byte:
@@ -129,6 +134,35 @@ func (this *defaultWriter) loadSerializer(acceptTypes []string) Serializer {
 	}
 
 	return this.defaultSerializer
+}
+func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, request *http.Request, typed *JSONPResult) (err error) {
+	// TODO: find &callback=... or ?callback=...
+	callbackFunction := "callback"
+
+	contentType := typed.ContentType
+	if len(contentType) == 0 {
+		contentType = mimeTypeApplicationJavascriptUTF8
+	}
+
+	this.writeHeader(response, typed.StatusCode, contentType, true)
+
+	if _, err = io.WriteString(response, callbackFunction); err != nil {
+		return err
+	}
+	if _, err = io.WriteString(response, "("); err != nil {
+		return err
+	}
+
+	serializer := this.loadSerializer(headerAcceptTypeJavascription)
+	if err = serializer.Serialize(response, typed.Content); err != nil {
+		return err
+	}
+
+	if _, err = io.WriteString(response, ")"); err != nil {
+		return err
+	}
+
+	return err
 }
 
 func (this *defaultWriter) writeStringResult(response http.ResponseWriter, typed string) (err error) {
