@@ -116,7 +116,7 @@ func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, re
 
 	this.writeHeader(response, typed.StatusCode, contentType, hasContent)
 	if hasContent {
-		return this.defaultSerializer.Serialize(response, typed.Content)
+		return serializer.Serialize(response, typed.Content)
 	}
 
 	return nil
