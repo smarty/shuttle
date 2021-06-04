@@ -69,10 +69,10 @@ func normalizeMediaType(value string) string {
 type deserializeReader struct {
 	available                  map[string]Deserializer
 	unsupportedMediaTypeResult interface{}
-	result                     func(error) interface{}
+	resultFactory              func(error) interface{}
 }
 
-func newDeserializeReader(deserializerFactories map[string]func() Deserializer, unsupportedMediaTypeResult interface{}, result func(error) interface{}) Reader {
+func newDeserializeReader(deserializerFactories map[string]func() Deserializer, unsupportedMediaTypeResult interface{}, resultFactory func(error) interface{}) Reader {
 	available := make(map[string]Deserializer, len(deserializerFactories))
 	for contentType, factory := range deserializerFactories {
 		available[contentType] = factory()
@@ -81,7 +81,7 @@ func newDeserializeReader(deserializerFactories map[string]func() Deserializer, 
 	return &deserializeReader{
 		available:                  available,
 		unsupportedMediaTypeResult: unsupportedMediaTypeResult,
-		result:                     result,
+		resultFactory:              resultFactory,
 	}
 }
 
@@ -89,7 +89,7 @@ func (this *deserializeReader) Read(input InputModel, request *http.Request) int
 	if deserializer := this.loadDeserializer(request.Header[headerContentType]); deserializer == nil {
 		return this.unsupportedMediaTypeResult
 	} else if err := deserializer.Deserialize(input, request.Body); err != nil {
-		return this.result(err)
+		return this.resultFactory(err)
 	}
 
 	return nil
@@ -107,16 +107,16 @@ func (this *deserializeReader) loadDeserializer(contentTypes []string) Deseriali
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type bindReader struct {
-	factory func(error) interface{}
+	resultFactory func(error) interface{}
 }
 
-func newBindReader(factory func(error) interface{}) Reader {
-	return &bindReader{factory: factory}
+func newBindReader(resultFactory func(error) interface{}) Reader {
+	return &bindReader{resultFactory: resultFactory}
 }
 
 func (this *bindReader) Read(target InputModel, request *http.Request) interface{} {
 	if err := target.Bind(request); err != nil {
-		return this.factory(err)
+		return this.resultFactory(err)
 	}
 
 	return nil
@@ -124,17 +124,18 @@ func (this *bindReader) Read(target InputModel, request *http.Request) interface
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type validationReader struct {
-	buffer []error
+type validateReader struct {
+	resultFactory func([]error) interface{}
+	buffer        []error
 }
 
-func newValidationReader(bufferSize int) Reader {
-	return &validationReader{buffer: make([]error, bufferSize)}
+func newValidateReader(resultFactory func([]error) interface{}, bufferSize int) Reader {
+	return &validateReader{resultFactory: resultFactory, buffer: make([]error, bufferSize)}
 }
 
-func (this *validationReader) Read(target InputModel, _ *http.Request) interface{} {
+func (this *validateReader) Read(target InputModel, _ *http.Request) interface{} {
 	if count := target.Validate(this.buffer); count > 0 {
-		return this.buffer[0:count]
+		return this.resultFactory(this.buffer[0:count])
 	}
 
 	return nil

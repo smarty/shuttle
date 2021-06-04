@@ -118,7 +118,7 @@ func TestBindReader_Error(t *testing.T) {
 func TestValidateReader_NoErrors(t *testing.T) {
 	input := &TestInputModel{}
 
-	result := newValidationReader(4).Read(input, nil)
+	result := newValidateReader(nil, 4).Read(input, nil)
 
 	Assert(t).That(result).IsNil()
 }
@@ -126,10 +126,13 @@ func TestValidateReader_ErrorResult(t *testing.T) {
 	input := &TestInputModel{
 		validationErrors: []error{errors.New("1"), errors.New("2")},
 	}
+	var errorsProvidedToFactor []error
+	resultFactory := func(errs []error) interface{} { errorsProvidedToFactor = errs; return "fail" }
 
-	result := newValidationReader(4).Read(input, nil)
+	result := newValidateReader(resultFactory, 4).Read(input, nil)
 
-	Assert(t).That(result).Equals(input.validationErrors)
+	Assert(t).That(result).Equals("fail")
+	Assert(t).That(errorsProvidedToFactor).Equals(input.validationErrors)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
