@@ -80,7 +80,30 @@ type InputErrors struct {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (this InputError) Error() string { return this.Message }
+func (this InputError) Error() string                   { return this.Message }
+func (this *TextResult) SetContent(value interface{})   { this.Content = value.(string) }
+func (this *BinaryResult) SetContent(value interface{}) { this.Content = value.([]byte) }
+func (this *StreamResult) SetContent(value interface{}) { this.Content = value.(io.Reader) }
+func (this *SerializeResult) SetContent(value interface{}) {
+	switch typed := value.(type) {
+	case []InputError:
+		if content, ok := this.Content.(InputErrors); ok {
+			content.Errors = typed
+		} else {
+			this.Content = InputErrors{Errors: typed}
+		}
+
+	case InputError:
+		if content, ok := this.Content.(InputErrors); ok {
+			content.Errors = content.Errors[0:0]
+			content.Errors = append(content.Errors, typed)
+		} else {
+			this.Content = InputErrors{Errors: []InputError{typed}}
+		}
+	default:
+		this.Content = value
+	}
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

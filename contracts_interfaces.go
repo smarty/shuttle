@@ -32,6 +32,11 @@ type Reader interface {
 	Read(InputModel, *http.Request) interface{}
 }
 
+// ContentResult sets the content on the underlying instance.
+type ContentResult interface {
+	SetContent(interface{})
+}
+
 // Processor represents the mechanism used to carry out the desired instruction or user-provided intention. The second
 // value is deliberately left opaque to reduce library dependencies and to encourage proper type discovery of the
 // InputModel provided.
