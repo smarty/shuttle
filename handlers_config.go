@@ -16,11 +16,11 @@ type configuration struct {
 	MaxValidationErrors         int
 	Readers                     []func() Reader
 	Writer                      func() Writer
+	NotAcceptableResult         *TextResult
 	UnsupportedMediaTypeResult  interface{}
 	DeserializationFailedResult func(error) interface{}
 	BindFailedResult            func(error) interface{}
 	ValidationFailedResult      func([]error) interface{}
-	NotAcceptableResult         *TextResult
 }
 
 func newHandlerFromOptions(options []Option) http.Handler {
@@ -226,11 +226,11 @@ func (singleton) defaults(options ...Option) []Option {
 
 		Options.Writer(nil),
 
+		Options.NotAcceptableResult(notAcceptableResult),
 		Options.UnsupportedMediaTypeResult(unsupportedMediaTypeResult),
 		Options.DeserializationFailedResult(func(error) interface{} { return deserializationResult }),
 		Options.BindFailedResult(func(error) interface{} { return bindFailedResult }),
 		Options.ValidationFailedResult(func(errs []error) interface{} { validationFailedResult.Content = errs; return validationFailedResult }),
-		Options.NotAcceptableResult(notAcceptableResult),
 	}, options...)
 }
 

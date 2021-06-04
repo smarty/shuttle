@@ -73,8 +73,6 @@ type InputError struct {
 	Message string `json:"message,omitempty"`
 }
 
-func (this InputError) Error() string { return this.Message }
-
 // InputErrors represents a set of problems with the calling HTTP request.
 type InputErrors struct {
 	Errors []InputError `json:"errors"`
@@ -82,7 +80,20 @@ type InputErrors struct {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+func (this InputError) Error() string { return this.Message }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 var (
+	notAcceptableResult = &TextResult{
+		StatusCode:  http.StatusNotAcceptable,
+		ContentType: mimeTypeApplicationJSONUTF8,
+		Content: _serializeJSON(InputErrors{Errors: []InputError{{
+			Fields:  []string{"header:Accept"},
+			Name:    "invalid-accept-header",
+			Message: "Unable to represent the application results using the Accept type.",
+		}}}),
+	}
 	unsupportedMediaTypeResult = &SerializeResult{
 		StatusCode: http.StatusUnsupportedMediaType,
 		Content: InputErrors{Errors: []InputError{{
@@ -106,15 +117,6 @@ var (
 			Name:    "malformed-request-payload",
 			Message: "Unable to bind the HTTP request values onto the appropriate data structure.",
 		}}},
-	}
-	notAcceptableResult = &TextResult{
-		StatusCode:  http.StatusNotAcceptable,
-		ContentType: mimeTypeApplicationJSONUTF8,
-		Content: _serializeJSON(InputErrors{Errors: []InputError{{
-			Fields:  []string{"header:Accept"},
-			Name:    "invalid-accept-header",
-			Message: "Unable to represent the application results using the Accept type.",
-		}}}),
 	}
 )
 
