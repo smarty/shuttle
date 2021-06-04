@@ -51,8 +51,6 @@ func TestShuttleDeserializationFailure(t *testing.T) {
 	handler := NewHandler(
 		Options.InputModel(func() InputModel { return &FakeDeserializeInputModel{Name: "garbage"} }),
 		Options.DeserializeJSON(true),
-		// Options.DefaultSerializer(nil),
-		// Options.DefaultSerializer(func() Serializer { return newJSONSerializer() }),
 	)
 
 	handler.ServeHTTP(response, request)
@@ -76,11 +74,9 @@ func TestShuttleBindFailure(t *testing.T) {
 
 func TestShuttleValidationFailure(t *testing.T) {
 	response := httptest.NewRecorder()
-	request := httptest.NewRequest("GET", "/", bytes.NewBufferString(`{"name":"value"}`))
-	request.Header["Content-Type"] = []string{"application/json"}
+	request := httptest.NewRequest("GET", "/", nil)
 	handler := NewHandler(
-		Options.InputModel(func() InputModel { return &FakeDeserializeInputModel{Name: "garbage", validationFailure: 1} }),
-		Options.DeserializeJSON(true),
+		Options.InputModel(func() InputModel { return &FakeDeserializeInputModel{Name: "garbage", validationFailure: 2} }),
 	)
 
 	handler.ServeHTTP(response, request)
@@ -105,4 +101,10 @@ type FakeDeserializeInputModel struct {
 
 func (this *FakeDeserializeInputModel) Reset()                   { this.Name = "" }
 func (this *FakeDeserializeInputModel) Bind(*http.Request) error { return this.bindFailure }
-func (this *FakeDeserializeInputModel) Validate([]error) int     { return this.validationFailure }
+func (this *FakeDeserializeInputModel) Validate(target []error) int {
+	for i := 0; i < this.validationFailure; i++ {
+		target[i] = InputError{Message: "validation-error"}
+	}
+
+	return this.validationFailure
+}

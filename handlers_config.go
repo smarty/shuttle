@@ -18,9 +18,9 @@ type configuration struct {
 	Writer                      func() Writer
 	NotAcceptableResult         *TextResult
 	UnsupportedMediaTypeResult  interface{}
-	DeserializationFailedResult func(error) interface{}
-	BindFailedResult            func(error) interface{}
-	ValidationFailedResult      func([]error) interface{}
+	DeserializationFailedResult func() ContentResult
+	BindFailedResult            func() ContentResult
+	ValidationFailedResult      func() ContentResult
 }
 
 func newHandlerFromOptions(options []Option) http.Handler {
@@ -151,23 +151,20 @@ func (singleton) UnsupportedMediaTypeResult(value interface{}) Option {
 }
 
 // DeserializationFailedResult registers the result to be written to the underlying HTTP response stream to indicate
-// when the HTTP request body cannot be deserialized into the configured InputModel. If the callback receives the error
-// provided and attaches it an instance of the result, then a unique instance must be provided per invocation.
-func (singleton) DeserializationFailedResult(value func(error) interface{}) Option {
+// when the HTTP request body cannot be deserialized into the configured InputModel.
+func (singleton) DeserializationFailedResult(value func() ContentResult) Option {
 	return func(this *configuration) { this.DeserializationFailedResult = value }
 }
 
 // BindFailedResult registers the result to be written to the underlying HTTP response stream to indicate when the HTTP
-// request cannot be properly bound or mapped onto the configured InputModel. If the callback receives the error
-// provided and attaches it an instance of the result, then a unique instance must be provided per invocation.
-func (singleton) BindFailedResult(value func(error) interface{}) Option {
+// request cannot be properly bound or mapped onto the configured InputModel.
+func (singleton) BindFailedResult(value func() ContentResult) Option {
 	return func(this *configuration) { this.BindFailedResult = value }
 }
 
 // ValidationFailedResult registers the result to be written to the underlying HTTP response stream to indicate when the
-// HTTP request contains validation errors according to the provided InputModel. If the callback receives the error
-// slice provided and attaches it an instance of the result, then a unique instance must be provided per invocation.
-func (singleton) ValidationFailedResult(value func([]error) interface{}) Option {
+// HTTP request contains validation errors according to the provided InputModel.
+func (singleton) ValidationFailedResult(value func() ContentResult) Option {
 	return func(this *configuration) { this.ValidationFailedResult = value }
 }
 
@@ -190,16 +187,16 @@ func (singleton) apply(options ...Option) Option {
 
 		if len(this.Deserializers) > 0 {
 			this.Readers = append(this.Readers, func() Reader {
-				return newDeserializeReader(this.Deserializers, this.UnsupportedMediaTypeResult, this.DeserializationFailedResult)
+				return newDeserializeReader(this.Deserializers, this.UnsupportedMediaTypeResult, this.DeserializationFailedResult())
 			})
 		}
 
 		if this.Bind {
-			this.Readers = append(this.Readers, func() Reader { return newBindReader(this.BindFailedResult) })
+			this.Readers = append(this.Readers, func() Reader { return newBindReader(this.BindFailedResult()) })
 		}
 
 		if this.Validate {
-			this.Readers = append(this.Readers, func() Reader { return newValidateReader(this.ValidationFailedResult, this.MaxValidationErrors) })
+			this.Readers = append(this.Readers, func() Reader { return newValidateReader(this.ValidationFailedResult(), this.MaxValidationErrors) })
 		}
 
 		if this.Writer == nil {
@@ -208,10 +205,6 @@ func (singleton) apply(options ...Option) Option {
 	}
 }
 func (singleton) defaults(options ...Option) []Option {
-	// TODO: if this isn't a pointer, does the ValidationFailedResult option below make a copy of this
-	// if not, we have a concurrency error
-	validationFailedResult := SerializeResult{StatusCode: http.StatusUnprocessableEntity}
-
 	return append([]Option{
 		Options.InputModel(func() InputModel { return &nop{} }),
 		Options.ProcessorSharedInstance(&nop{}),
@@ -228,9 +221,9 @@ func (singleton) defaults(options ...Option) []Option {
 
 		Options.NotAcceptableResult(notAcceptableResult),
 		Options.UnsupportedMediaTypeResult(unsupportedMediaTypeResult),
-		Options.DeserializationFailedResult(func(error) interface{} { return deserializationResult }),
-		Options.BindFailedResult(func(error) interface{} { return bindFailedResult }),
-		Options.ValidationFailedResult(func(errs []error) interface{} { validationFailedResult.Content = errs; return validationFailedResult }),
+		Options.DeserializationFailedResult(deserializationResult),
+		Options.BindFailedResult(bindErrorResult),
+		Options.ValidationFailedResult(validationResult),
 	}, options...)
 }
 
