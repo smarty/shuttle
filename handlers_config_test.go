@@ -2,7 +2,6 @@ package shuttle
 
 import (
 	"bytes"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -62,14 +61,16 @@ func TestShuttleBindFailure(t *testing.T) {
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", "/", bytes.NewBufferString(`{"name":"value"}`))
 	request.Header["Content-Type"] = []string{"application/json"}
+	bindError := InputError{Message: "bind-failure"}
 	handler := NewHandler(
-		Options.InputModel(func() InputModel { return &FakeDeserializeInputModel{Name: "garbage", bindFailure: errors.New("")} }),
+		Options.InputModel(func() InputModel { return &FakeDeserializeInputModel{Name: "garbage", bindFailure: bindError} }),
 		Options.DeserializeJSON(true),
 	)
 
 	handler.ServeHTTP(response, request)
 
 	Assert(t).That(response.Code).Equals(400)
+	Assert(t).That(response.Body.String()).Equals(`{"errors":[{"message":"bind-failure"}]}` + "\n")
 }
 
 func TestShuttleValidationFailure(t *testing.T) {
@@ -82,6 +83,8 @@ func TestShuttleValidationFailure(t *testing.T) {
 	handler.ServeHTTP(response, request)
 
 	Assert(t).That(response.Code).Equals(422)
+	Assert(t).That(response.Body.String()).Equals(`{"errors":[{"message":"validation-error"},{"message":"validation-error"}]}` + "\n")
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -59,9 +59,6 @@ func (this *defaultWriter) write(response http.ResponseWriter, request *http.Req
 	case SerializeResult:
 		this.writeSerializeResult(response, request, &typed)
 
-	case *FixedContentResult:
-		this.write(response, request, typed.ContentResult)
-
 	case string:
 		writeStringResult(response, typed)
 	case []byte:

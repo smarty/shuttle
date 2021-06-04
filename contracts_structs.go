@@ -56,9 +56,9 @@ type SerializeResult struct {
 	Content interface{}
 }
 
-type FixedContentResult struct {
-	ContentResult
-}
+type FixedContentResult struct{ ContentResult }
+type bindErrorResult struct{ *SerializeResult }
+type validationErrorResult struct{ *SerializeResult }
 
 // InputError represents some kind of problem with the calling HTTP request.
 type InputError struct {
@@ -79,14 +79,32 @@ type InputError struct {
 
 // InputErrors represents a set of problems with the calling HTTP request.
 type InputErrors struct {
-	Errors []InputError `json:"errors,omitempty"`
+	Errors []error `json:"errors,omitempty"`
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (this InputError) Error() string                      { return this.Message }
+func (this InputError) Error() string { return this.Message }
+
 func (this *SerializeResult) SetContent(value interface{}) { this.Content = value }
-func (this *FixedContentResult) SetContent(interface{})    {} // no-op
+func (this *SerializeResult) Result() interface{}          { return this }
+
+func (this *FixedContentResult) SetContent(interface{}) {} // no-op
+func (this *FixedContentResult) Result() interface{}    { return this.ContentResult }
+
+func (this *bindErrorResult) SetContent(value interface{}) {
+	inputErrors := this.SerializeResult.Content.(*InputErrors)
+	inputErrors.Errors = inputErrors.Errors[0:0]
+	inputErrors.Errors = append(inputErrors.Errors, value.(error))
+}
+func (this *bindErrorResult) Result() interface{} { return this.SerializeResult }
+
+func (this *validationErrorResult) SetContent(value interface{}) {
+	inputErrors := this.SerializeResult.Content.(*InputErrors)
+	inputErrors.Errors = inputErrors.Errors[0:0]
+	inputErrors.Errors = value.([]error)
+}
+func (this *validationErrorResult) Result() interface{} { return this.SerializeResult }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -94,49 +112,59 @@ var (
 	notAcceptableResult = &TextResult{
 		StatusCode:  http.StatusNotAcceptable,
 		ContentType: mimeTypeApplicationJSONUTF8,
-		Content: _serializeJSON(InputErrors{Errors: []InputError{{
-			Fields:  []string{"header:Accept"},
-			Name:    "invalid-accept-header",
-			Message: "Unable to represent the application results using the Accept type.",
-		}}}),
+		Content: _serializeJSON(InputErrors{
+			Errors: []error{
+				InputError{
+					Fields:  []string{"header:Accept"},
+					Name:    "invalid-accept-header",
+					Message: "Unable to represent the application results using the Accept type.",
+				},
+			},
+		}),
 	}
 	unsupportedMediaTypeResult = &SerializeResult{
 		StatusCode: http.StatusUnsupportedMediaType,
-		Content: InputErrors{Errors: []InputError{{
-			Fields:  []string{"header:Content-Type"},
-			Name:    "invalid-content-type-header",
-			Message: "The content type specified, if any, was not recognized.",
-		}}},
+		Content: InputErrors{
+			Errors: []error{
+				InputError{
+					Fields:  []string{"header:Content-Type"},
+					Name:    "invalid-content-type-header",
+					Message: "The content type specified, if any, was not recognized.",
+				},
+			},
+		},
 	}
-	deserializationResult = func() ContentResult {
+	deserializationResultFactory = func() ContentResult {
 		return &FixedContentResult{
 			ContentResult: &SerializeResult{
 				StatusCode: http.StatusBadRequest,
-				Content: InputErrors{Errors: []InputError{{
-					Fields:  []string{"body"},
-					Name:    "malformed-request-payload",
-					Message: "The body did not contain well-formed data and could not be properly deserialized.",
-				}}},
+				Content: InputErrors{
+					Errors: []error{
+						InputError{
+							Fields:  []string{"body"},
+							Name:    "malformed-request-payload",
+							Message: "The body did not contain well-formed data and could not be properly deserialized.",
+						},
+					},
+				},
 			},
 		}
 	}
-	bindErrorResult = func() ContentResult {
-		return &FixedContentResult{
-			ContentResult: &SerializeResult{
+	bindErrorResultFactory = func() ContentResult {
+		return &bindErrorResult{
+			SerializeResult: &SerializeResult{
 				StatusCode: http.StatusBadRequest,
-				Content: InputErrors{Errors: []InputError{{
-					Fields:  []string{"body"},
-					Name:    "malformed-request-payload",
-					Message: "Unable to bind the HTTP request values onto the appropriate data structure.",
-				}}},
+				Content:    &InputErrors{},
 			},
 		}
 	}
 
-	validationResult = func() ContentResult {
-		return &SerializeResult{
-			StatusCode: http.StatusUnprocessableEntity,
-			Content:    nil, // TODO
+	validationResultFactory = func() ContentResult {
+		return &validationErrorResult{
+			SerializeResult: &SerializeResult{
+				StatusCode: http.StatusUnprocessableEntity,
+				Content:    &InputErrors{},
+			},
 		}
 	}
 )

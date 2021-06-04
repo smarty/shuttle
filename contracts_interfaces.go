@@ -35,6 +35,7 @@ type Reader interface {
 // ContentResult sets the content on the underlying instance.
 type ContentResult interface {
 	SetContent(interface{})
+	Result() interface{}
 }
 
 // Processor represents the mechanism used to carry out the desired instruction or user-provided intention. The second

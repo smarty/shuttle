@@ -90,7 +90,7 @@ func (this *deserializeReader) Read(input InputModel, request *http.Request) int
 		return this.unsupportedMediaTypeResult
 	} else if err := deserializer.Deserialize(input, request.Body); err != nil {
 		this.result.SetContent(err) // implementations of this may override and no-op SetContent
-		return this.result
+		return this.result.Result()
 	}
 
 	return nil
@@ -118,7 +118,7 @@ func newBindReader(result ContentResult) Reader {
 func (this *bindReader) Read(target InputModel, request *http.Request) interface{} {
 	if err := target.Bind(request); err != nil {
 		this.result.SetContent(err)
-		return this.result
+		return this.result.Result()
 	}
 
 	return nil
@@ -138,7 +138,7 @@ func newValidateReader(result ContentResult, bufferSize int) Reader {
 func (this *validateReader) Read(target InputModel, _ *http.Request) interface{} {
 	if count := target.Validate(this.buffer); count > 0 {
 		this.result.SetContent(this.buffer[0:count])
-		return this.result
+		return this.result.Result()
 	}
 
 	return nil

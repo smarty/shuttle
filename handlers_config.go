@@ -221,9 +221,9 @@ func (singleton) defaults(options ...Option) []Option {
 
 		Options.NotAcceptableResult(notAcceptableResult),
 		Options.UnsupportedMediaTypeResult(unsupportedMediaTypeResult),
-		Options.DeserializationFailedResult(deserializationResult),
-		Options.BindFailedResult(bindErrorResult),
-		Options.ValidationFailedResult(validationResult),
+		Options.DeserializationFailedResult(deserializationResultFactory),
+		Options.BindFailedResult(bindErrorResultFactory),
+		Options.ValidationFailedResult(validationResultFactory),
 	}, options...)
 }
 

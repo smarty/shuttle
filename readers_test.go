@@ -167,3 +167,4 @@ func (this *FakeDeserializer) Deserialize(target interface{}, source io.Reader) 
 type FakeContentResult struct{ value interface{} }
 
 func (this *FakeContentResult) SetContent(value interface{}) { this.value = value }
+func (this *FakeContentResult) Result() interface{}          { return this }
