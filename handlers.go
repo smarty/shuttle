@@ -56,3 +56,9 @@ func (this *defaultHandler) process(request *http.Request) interface{} {
 
 	return this.processor.Process(request.Context(), this.input)
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TODO:
+// 404 Not Found (JSON/XML/etc. output)
+// 405 Method Not Allowed (JSON/XML/etc. output)
