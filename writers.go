@@ -21,7 +21,7 @@ func newWriter(serializerFactories map[string]func() Serializer) Writer {
 
 	return &defaultWriter{
 		serializers:       serializers,
-		defaultSerializer: serializers[""],
+		defaultSerializer: serializers[defaultSerializerContentType],
 		bodyBuffer:        make([]byte, 1024*4),
 		headerBuffer:      make([]string, 1),
 		serializeBuffer:   &SerializeResult{},

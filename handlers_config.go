@@ -86,11 +86,7 @@ func (singleton) Deserializer(contentType string, value func() Deserializer) Opt
 // mutable state, then the same instance may be returned between each invocation of the callback provided.
 func (singleton) DefaultSerializer(value func() Serializer) Option {
 	return func(this *configuration) {
-		if value != nil {
-			Options.Serializer("", value)(this)
-		} else {
-			delete(this.Serializers, "")
-		}
+		Options.Serializer(defaultSerializerContentType, value)(this)
 	}
 }
 

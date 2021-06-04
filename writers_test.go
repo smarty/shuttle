@@ -107,8 +107,8 @@ func recordResponse(result interface{}, acceptHeader string) *httptest.ResponseR
 }
 func newTestWriter() Writer {
 	return newWriter(map[string]func() Serializer{
-		"":                func() Serializer { return newFakeWriteSerializer("application/json; charset=utf-8") },
-		"application/xml": func() Serializer { return newFakeWriteSerializer("application/xml; charset=utf-8") },
+		defaultSerializerContentType: func() Serializer { return newFakeWriteSerializer("application/json; charset=utf-8") },
+		"application/xml":            func() Serializer { return newFakeWriteSerializer("application/xml; charset=utf-8") },
 	})
 }
 func assertResponse(t *testing.T, response *httptest.ResponseRecorder, expected HTTPResponse) {

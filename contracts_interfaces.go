@@ -89,4 +89,6 @@ const (
 	headerContentType    = "Content-Type"
 	headerAccept         = "Accept"
 	headerAcceptAnyValue = "*/*"
+
+	defaultSerializerContentType = ""
 )
