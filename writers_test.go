@@ -109,7 +109,7 @@ func newTestWriter() Writer {
 	return newWriter(map[string]func() Serializer{
 		defaultSerializerContentType: func() Serializer { return newFakeWriteSerializer("application/json; charset=utf-8") },
 		"application/xml":            func() Serializer { return newFakeWriteSerializer("application/xml; charset=utf-8") },
-	})
+	}, &nopMonitor{})
 }
 func assertResponse(t *testing.T, response *httptest.ResponseRecorder, expected HTTPResponse) {
 	Assert(t).That(response.Code).Equals(expected.StatusCode)

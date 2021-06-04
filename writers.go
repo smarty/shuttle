@@ -8,12 +8,13 @@ import (
 type defaultWriter struct {
 	serializers       map[string]Serializer
 	defaultSerializer Serializer
+	monitor           Monitor
 	bodyBuffer        []byte
 	headerBuffer      []string
 	serializeBuffer   *SerializeResult
 }
 
-func newWriter(serializerFactories map[string]func() Serializer) Writer {
+func newWriter(serializerFactories map[string]func() Serializer, monitor Monitor) Writer {
 	serializers := make(map[string]Serializer, len(serializerFactories))
 	for acceptType, callback := range serializerFactories {
 		serializers[acceptType] = callback()
@@ -22,6 +23,7 @@ func newWriter(serializerFactories map[string]func() Serializer) Writer {
 	return &defaultWriter{
 		serializers:       serializers,
 		defaultSerializer: serializers[defaultSerializerContentType],
+		monitor:           monitor,
 		bodyBuffer:        make([]byte, 1024*4),
 		headerBuffer:      make([]string, 1),
 		serializeBuffer:   &SerializeResult{},
@@ -40,60 +42,70 @@ func (this *defaultWriter) Write(response http.ResponseWriter, request *http.Req
 func (this *defaultWriter) write(response http.ResponseWriter, request *http.Request, result interface{}) {
 	switch typed := result.(type) {
 	case *TextResult:
-		this.writeTextResult(response, typed)
+		this.responseStatus(this.writeTextResult(response, typed))
 	case TextResult:
-		this.writeTextResult(response, &typed)
+		this.responseStatus(this.writeTextResult(response, &typed))
 
 	case *BinaryResult:
-		this.writeBinaryResult(response, typed)
+		this.responseStatus(this.writeBinaryResult(response, typed))
 	case BinaryResult:
-		this.writeBinaryResult(response, &typed)
+		this.responseStatus(this.writeBinaryResult(response, &typed))
 
 	case *StreamResult:
-		this.writeStreamResult(response, typed)
+		this.responseStatus(this.writeStreamResult(response, typed))
 	case StreamResult:
-		this.writeStreamResult(response, &typed)
+		this.responseStatus(this.writeStreamResult(response, &typed))
 
 	case *SerializeResult:
-		this.writeSerializeResult(response, request, typed)
+		this.responseStatus(this.writeSerializeResult(response, request, typed))
 	case SerializeResult:
-		this.writeSerializeResult(response, request, &typed)
+		this.responseStatus(this.writeSerializeResult(response, request, &typed))
 
 	case string:
-		writeStringResult(response, typed)
+		this.responseStatus(this.writeStringResult(response, typed))
 	case []byte:
-		writeByteResult(response, typed)
+		this.responseStatus(this.writeByteResult(response, typed))
 	case bool:
-		writeBoolResult(response, typed)
+		this.responseStatus(this.writeBoolResult(response, typed))
 
 	default:
 		this.serializeBuffer.Content = result
-		this.writeSerializeResult(response, request, this.serializeBuffer)
+		this.responseStatus(this.writeSerializeResult(response, request, this.serializeBuffer))
 	}
 }
 
-func (this *defaultWriter) writeTextResult(response http.ResponseWriter, typed *TextResult) {
+func (this *defaultWriter) writeTextResult(response http.ResponseWriter, typed *TextResult) (err error) {
+	this.monitor.TextResult()
 	hasContent := len(typed.Content) > 0
 	this.writeHeader(response, typed.StatusCode, typed.ContentType, hasContent)
 	if hasContent {
-		_, _ = io.WriteString(response, typed.Content)
+		_, err = io.WriteString(response, typed.Content)
 	}
+
+	return err
 }
-func (this *defaultWriter) writeBinaryResult(response http.ResponseWriter, typed *BinaryResult) {
+func (this *defaultWriter) writeBinaryResult(response http.ResponseWriter, typed *BinaryResult) (err error) {
+	this.monitor.BinaryResult()
 	hasContent := len(typed.Content) > 0
 	this.writeHeader(response, typed.StatusCode, typed.ContentType, hasContent)
 	if hasContent {
-		_, _ = response.Write(typed.Content)
+		_, err = response.Write(typed.Content)
 	}
+
+	return err
 }
-func (this *defaultWriter) writeStreamResult(response http.ResponseWriter, typed *StreamResult) {
+func (this *defaultWriter) writeStreamResult(response http.ResponseWriter, typed *StreamResult) (err error) {
+	this.monitor.StreamResult()
 	hasContent := typed.Content != nil
 	this.writeHeader(response, typed.StatusCode, typed.ContentType, hasContent)
 	if hasContent {
-		_, _ = io.CopyBuffer(response, typed.Content, this.bodyBuffer)
+		_, err = io.CopyBuffer(response, typed.Content, this.bodyBuffer)
 	}
+
+	return err
 }
-func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, request *http.Request, typed *SerializeResult) {
+func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, request *http.Request, typed *SerializeResult) error {
+	this.monitor.SerializeResult()
 	hasContent := typed.Content != nil
 
 	serializer := this.loadSerializer(request.Header[headerAccept])
@@ -104,8 +116,10 @@ func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, re
 
 	this.writeHeader(response, typed.StatusCode, contentType, hasContent)
 	if hasContent {
-		_ = this.defaultSerializer.Serialize(response, typed.Content)
+		return this.defaultSerializer.Serialize(response, typed.Content)
 	}
+
+	return nil
 }
 func (this *defaultWriter) loadSerializer(acceptTypes []string) Serializer {
 	for _, acceptType := range acceptTypes {
@@ -117,22 +131,34 @@ func (this *defaultWriter) loadSerializer(acceptTypes []string) Serializer {
 	return this.defaultSerializer
 }
 
-func writeStringResult(response http.ResponseWriter, typed string) {
+func (this *defaultWriter) writeStringResult(response http.ResponseWriter, typed string) (err error) {
+	this.monitor.NativeResult()
+
 	if len(typed) > 0 {
-		_, _ = io.WriteString(response, typed)
+		_, err = io.WriteString(response, typed)
 	}
+
+	return err
 }
-func writeByteResult(response http.ResponseWriter, typed []byte) {
+func (this *defaultWriter) writeByteResult(response http.ResponseWriter, typed []byte) (err error) {
+	this.monitor.NativeResult()
+
 	if len(typed) > 0 {
-		_, _ = response.Write(typed)
+		_, err = response.Write(typed)
 	}
+
+	return err
 }
-func writeBoolResult(response http.ResponseWriter, typed bool) {
+func (this *defaultWriter) writeBoolResult(response http.ResponseWriter, typed bool) (err error) {
+	this.monitor.NativeResult()
+
 	if typed {
-		_, _ = io.WriteString(response, "true")
+		_, err = io.WriteString(response, "true")
 	} else {
-		_, _ = io.WriteString(response, "false")
+		_, err = io.WriteString(response, "false")
 	}
+
+	return err
 }
 
 func (this *defaultWriter) writeHeader(response http.ResponseWriter, statusCode int, contentType string, hasContent bool) {
@@ -142,6 +168,14 @@ func (this *defaultWriter) writeHeader(response http.ResponseWriter, statusCode 
 	}
 
 	if statusCode > 0 {
+		this.monitor.ResponseStatus(statusCode)
 		response.WriteHeader(statusCode)
+	} else {
+		this.monitor.ResponseStatus(http.StatusOK)
+	}
+}
+func (this *defaultWriter) responseStatus(err error) {
+	if err != nil {
+		this.monitor.ResponseFailed(err)
 	}
 }

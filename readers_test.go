@@ -31,7 +31,7 @@ func assertAcceptReader(t *testing.T, expectedResult string, acceptTypes, accept
 		"found": func() Serializer { return nil },
 	}
 
-	result := newAcceptReader(serializers, notAcceptable).Read(nil, request)
+	result := newAcceptReader(serializers, notAcceptable, &nopMonitor{}).Read(nil, request)
 
 	if len(expectedResult) == 0 {
 		Assert(t).That(result).IsNil()
@@ -72,7 +72,7 @@ func assertDeserializeReader(t *testing.T, expectedResult interface{}, contentTy
 		"application/json": func() Deserializer { return deserializer },
 	}
 
-	reader := newDeserializeReader(factories, "unsupported-media-type", fakeResult)
+	reader := newDeserializeReader(factories, "unsupported-media-type", fakeResult, &nopMonitor{})
 	result := reader.Read(input, request)
 
 	if result != "unsupported-media-type" {
@@ -90,7 +90,7 @@ func TestBindReader_NoErrors(t *testing.T) {
 	input := &FakeInputModel{}
 	request := httptest.NewRequest("GET", "/", nil)
 
-	result := newBindReader(nil).Read(input, request)
+	result := newBindReader(nil, &nopMonitor{}).Read(input, request)
 
 	Assert(t).That(result).IsNil()
 	Assert(t).That(input.boundRequest == request).IsTrue()
@@ -100,7 +100,7 @@ func TestBindReader_Error(t *testing.T) {
 	request := httptest.NewRequest("GET", "/", nil)
 	fakeBindErrorResult := &FakeContentResult{}
 
-	result := newBindReader(fakeBindErrorResult).Read(input, request)
+	result := newBindReader(fakeBindErrorResult, &nopMonitor{}).Read(input, request)
 
 	Assert(t).That(result).Equals(fakeBindErrorResult)
 	Assert(t).That(fakeBindErrorResult.value).Equals(input.bindError)
@@ -111,7 +111,7 @@ func TestBindReader_Error(t *testing.T) {
 func TestValidateReader_NoErrors(t *testing.T) {
 	input := &FakeInputModel{}
 
-	result := newValidateReader(nil, 4).Read(input, nil)
+	result := newValidateReader(nil, 4, &nopMonitor{}).Read(input, nil)
 
 	Assert(t).That(result).IsNil()
 }
@@ -121,7 +121,7 @@ func TestValidateReader_ErrorResult(t *testing.T) {
 	}
 	fakeValidationErrorsResult := &FakeContentResult{}
 
-	result := newValidateReader(fakeValidationErrorsResult, 4).Read(input, nil)
+	result := newValidateReader(fakeValidationErrorsResult, 4, &nopMonitor{}).Read(input, nil)
 
 	Assert(t).That(result).Equals(fakeValidationErrorsResult)
 	Assert(t).That(fakeValidationErrorsResult.value).Equals(input.validationErrors)

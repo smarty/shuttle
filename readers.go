@@ -8,19 +8,21 @@ import (
 type acceptReader struct {
 	acceptable map[string][]string
 	result     interface{}
+	monitor    Monitor
 }
 
-func newAcceptReader(serializerFactories map[string]func() Serializer, result *TextResult) Reader {
+func newAcceptReader(serializerFactories map[string]func() Serializer, result *TextResult, monitor Monitor) Reader {
 	acceptable := make(map[string][]string)
 	for acceptType := range serializerFactories {
 		acceptable[acceptType] = []string{acceptType}
 	}
 
-	return &acceptReader{acceptable: acceptable, result: result}
+	return &acceptReader{acceptable: acceptable, result: result, monitor: monitor}
 }
 
 func (this *acceptReader) Read(_ InputModel, request *http.Request) interface{} {
 	if normalized, found := this.findAcceptType(request.Header[headerAccept]); !found {
+		this.monitor.NotAcceptable()
 		return this.result
 	} else {
 		request.Header[headerAccept] = normalized
@@ -70,9 +72,10 @@ type deserializeReader struct {
 	available                  map[string]Deserializer
 	unsupportedMediaTypeResult interface{}
 	result                     ContentResult
+	monitor                    Monitor
 }
 
-func newDeserializeReader(deserializerFactories map[string]func() Deserializer, unsupportedMediaTypeResult interface{}, result ContentResult) Reader {
+func newDeserializeReader(deserializerFactories map[string]func() Deserializer, unsupportedMediaTypeResult interface{}, result ContentResult, monitor Monitor) Reader {
 	available := make(map[string]Deserializer, len(deserializerFactories))
 	for contentType, factory := range deserializerFactories {
 		available[contentType] = factory()
@@ -82,13 +85,18 @@ func newDeserializeReader(deserializerFactories map[string]func() Deserializer, 
 		available:                  available,
 		unsupportedMediaTypeResult: unsupportedMediaTypeResult,
 		result:                     result,
+		monitor:                    monitor,
 	}
 }
 
 func (this *deserializeReader) Read(input InputModel, request *http.Request) interface{} {
+	this.monitor.Deserialize()
+
 	if deserializer := this.loadDeserializer(request.Header[headerContentType]); deserializer == nil {
+		this.monitor.UnsupportedMediaType()
 		return this.unsupportedMediaTypeResult
 	} else if err := deserializer.Deserialize(input, request.Body); err != nil {
+		this.monitor.DeserializeFailed()
 		this.result.SetContent(err) // implementations of this may override and no-op SetContent
 		return this.result.Result()
 	}
@@ -108,15 +116,18 @@ func (this *deserializeReader) loadDeserializer(contentTypes []string) Deseriali
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type bindReader struct {
-	result ContentResult
+	result  ContentResult
+	monitor Monitor
 }
 
-func newBindReader(result ContentResult) Reader {
-	return &bindReader{result: result}
+func newBindReader(result ContentResult, monitor Monitor) Reader {
+	return &bindReader{result: result, monitor: monitor}
 }
 
 func (this *bindReader) Read(target InputModel, request *http.Request) interface{} {
+	this.monitor.Bind()
 	if err := target.Bind(request); err != nil {
+		this.monitor.BindFailed(err)
 		this.result.SetContent(err)
 		return this.result.Result()
 	}
@@ -127,17 +138,21 @@ func (this *bindReader) Read(target InputModel, request *http.Request) interface
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type validateReader struct {
-	result ContentResult
-	buffer []error
+	result  ContentResult
+	buffer  []error
+	monitor Monitor
 }
 
-func newValidateReader(result ContentResult, bufferSize int) Reader {
-	return &validateReader{result: result, buffer: make([]error, bufferSize)}
+func newValidateReader(result ContentResult, bufferSize int, monitor Monitor) Reader {
+	return &validateReader{result: result, buffer: make([]error, bufferSize), monitor: monitor}
 }
 
 func (this *validateReader) Read(target InputModel, _ *http.Request) interface{} {
+	this.monitor.Validate()
 	if count := target.Validate(this.buffer); count > 0 {
-		this.result.SetContent(this.buffer[0:count])
+		errs := this.buffer[0:count]
+		this.monitor.ValidateFailed(errs)
+		this.result.SetContent(errs)
 		return this.result.Result()
 	}
 

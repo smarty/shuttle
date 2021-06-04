@@ -5,7 +5,10 @@ import (
 	"sync"
 )
 
-type poolHandler struct{ pool *sync.Pool }
+type poolHandler struct {
+	pool    *sync.Pool
+	monitor Monitor
+}
 
 func NewHandler(options ...Option) http.Handler {
 	pool := &sync.Pool{New: func() interface{} {
@@ -30,18 +33,22 @@ type defaultHandler struct {
 	readers   []Reader
 	processor Processor
 	writer    Writer
+	monitor   Monitor
 }
 
-func newHandler(input InputModel, readers []Reader, processor Processor, writer Writer) http.Handler {
+func newHandler(input InputModel, readers []Reader, processor Processor, writer Writer, monitor Monitor) http.Handler {
+	monitor.HandlerCreated()
 	return &defaultHandler{
 		input:     input,
 		readers:   readers,
 		processor: processor,
 		writer:    writer,
+		monitor:   monitor,
 	}
 }
 
 func (this *defaultHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	this.monitor.RequestReceived()
 	result := this.process(request)
 	this.writer.Write(response, request, result)
 }
@@ -54,6 +61,7 @@ func (this *defaultHandler) process(request *http.Request) interface{} {
 		}
 	}
 
+	// FUTURE: if the context is cancelled, don't bother rendering a response
 	return this.processor.Process(request.Context(), this.input)
 }
 

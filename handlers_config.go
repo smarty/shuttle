@@ -21,6 +21,7 @@ type configuration struct {
 	DeserializationFailedResult func() ContentResult
 	BindFailedResult            func() ContentResult
 	ValidationFailedResult      func() ContentResult
+	Monitor                     Monitor
 }
 
 func newHandlerFromOptions(options []Option) http.Handler {
@@ -31,7 +32,7 @@ func newHandlerFromOptions(options []Option) http.Handler {
 		readers = append(readers, readerFactory())
 	}
 
-	return newHandler(config.InputModel(), readers, config.Processor(), config.Writer())
+	return newHandler(config.InputModel(), readers, config.Processor(), config.Writer(), config.Monitor)
 }
 
 func newConfig(options []Option) configuration {
@@ -175,6 +176,12 @@ func (singleton) NotAcceptableResult(value *TextResult) Option {
 	return func(this *configuration) { this.NotAcceptableResult = value }
 }
 
+// Monitor registers a mechanism to watch the internals of the library and to gather metrics when the various behaviors
+// occur.
+func (singleton) Monitor(value Monitor) Option {
+	return func(this *configuration) { this.Monitor = value }
+}
+
 func (singleton) apply(options ...Option) Option {
 	return func(this *configuration) {
 		for _, item := range Options.defaults(options...) {
@@ -182,25 +189,27 @@ func (singleton) apply(options ...Option) Option {
 		}
 
 		if this.VerifyAcceptHeader {
-			this.Readers = append(this.Readers, func() Reader { return newAcceptReader(this.Serializers, this.NotAcceptableResult) })
+			this.Readers = append(this.Readers, func() Reader { return newAcceptReader(this.Serializers, this.NotAcceptableResult, this.Monitor) })
 		}
 
 		if len(this.Deserializers) > 0 {
 			this.Readers = append(this.Readers, func() Reader {
-				return newDeserializeReader(this.Deserializers, this.UnsupportedMediaTypeResult, this.DeserializationFailedResult())
+				return newDeserializeReader(this.Deserializers, this.UnsupportedMediaTypeResult, this.DeserializationFailedResult(), this.Monitor)
 			})
 		}
 
 		if this.Bind {
-			this.Readers = append(this.Readers, func() Reader { return newBindReader(this.BindFailedResult()) })
+			this.Readers = append(this.Readers, func() Reader { return newBindReader(this.BindFailedResult(), this.Monitor) })
 		}
 
 		if this.Validate {
-			this.Readers = append(this.Readers, func() Reader { return newValidateReader(this.ValidationFailedResult(), this.MaxValidationErrors) })
+			this.Readers = append(this.Readers, func() Reader {
+				return newValidateReader(this.ValidationFailedResult(), this.MaxValidationErrors, this.Monitor)
+			})
 		}
 
 		if this.Writer == nil {
-			this.Writer = func() Writer { return newWriter(this.Serializers) }
+			this.Writer = func() Writer { return newWriter(this.Serializers, this.Monitor) }
 		}
 	}
 }
@@ -224,6 +233,8 @@ func (singleton) defaults(options ...Option) []Option {
 		Options.DeserializationFailedResult(deserializationResultFactory),
 		Options.BindFailedResult(bindErrorResultFactory),
 		Options.ValidationFailedResult(validationResultFactory),
+
+		Options.Monitor(&nopMonitor{}),
 	}, options...)
 }
 
@@ -235,8 +246,29 @@ var Options singleton
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type nop struct{}
+type nopMonitor struct{}
 
 func (*nop) Process(context.Context, interface{}) interface{} { return nil }
-func (*nop) Reset()                                           {}
-func (*nop) Bind(*http.Request) error                         { return nil }
-func (*nop) Validate([]error) int                             { return 0 }
+
+func (*nop) Reset()                   {}
+func (*nop) Bind(*http.Request) error { return nil }
+func (*nop) Validate([]error) int     { return 0 }
+
+func (*nopMonitor) HandlerCreated()        {}
+func (*nopMonitor) RequestReceived()       {}
+func (*nopMonitor) NotAcceptable()         {}
+func (*nopMonitor) UnsupportedMediaType()  {}
+func (*nopMonitor) Deserialize()           {}
+func (*nopMonitor) DeserializeFailed()     {}
+func (*nopMonitor) Bind()                  {}
+func (*nopMonitor) BindFailed(error)       {}
+func (*nopMonitor) Validate()              {}
+func (*nopMonitor) ValidateFailed([]error) {}
+func (*nopMonitor) TextResult()            {}
+func (*nopMonitor) BinaryResult()          {}
+func (*nopMonitor) StreamResult()          {}
+func (*nopMonitor) SerializeResult()       {}
+func (*nopMonitor) NativeResult()          {}
+func (*nopMonitor) SerializeFailed()       {}
+func (*nopMonitor) ResponseStatus(int)     {}
+func (*nopMonitor) ResponseFailed(error)   {}

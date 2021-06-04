@@ -78,6 +78,27 @@ type Serializer interface {
 	ContentType() string
 }
 
+type Monitor interface {
+	HandlerCreated()
+	RequestReceived()
+	NotAcceptable()
+	UnsupportedMediaType()
+	Deserialize()
+	DeserializeFailed()
+	Bind()
+	BindFailed(error)
+	Validate()
+	ValidateFailed([]error)
+	TextResult()
+	BinaryResult()
+	StreamResult()
+	SerializeResult()
+	NativeResult()
+	SerializeFailed()
+	ResponseStatus(int)
+	ResponseFailed(error)
+}
+
 var (
 	// ErrDeserializationFailure indicates that there was some kind of problem deserializing the request stream.
 	ErrDeserializationFailure = errors.New("failed to deserialize the stream into the instance provided")
