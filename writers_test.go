@@ -107,8 +107,8 @@ func recordResponse(result interface{}, acceptHeader string) *httptest.ResponseR
 }
 func newTestWriter() Writer {
 	return newWriter(map[string]func() Serializer{
-		"":                func() Serializer { return newTestWriteSerializer("application/json; charset=utf-8") },
-		"application/xml": func() Serializer { return newTestWriteSerializer("application/xml; charset=utf-8") },
+		"":                func() Serializer { return newFakeWriteSerializer("application/json; charset=utf-8") },
+		"application/xml": func() Serializer { return newFakeWriteSerializer("application/xml; charset=utf-8") },
 	})
 }
 func assertResponse(t *testing.T, response *httptest.ResponseRecorder, expected HTTPResponse) {
@@ -118,7 +118,7 @@ func assertResponse(t *testing.T, response *httptest.ResponseRecorder, expected 
 }
 
 func TestWriteHTTPHandler(t *testing.T) {
-	handler := &TestHTTPHandlerResult{}
+	handler := &FakeHTTPHandlerResult{}
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", "/", nil)
 
@@ -136,25 +136,25 @@ type HTTPResponse struct {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type TestHTTPHandlerResult struct {
+type FakeHTTPHandlerResult struct {
 	response http.ResponseWriter
 	request  *http.Request
 }
 
-func (this *TestHTTPHandlerResult) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+func (this *FakeHTTPHandlerResult) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	this.response = response
 	this.request = request
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type TestWriteSerializer string
+type FakeWriteSerializer string
 
-func newTestWriteSerializer(contentType string) Serializer {
-	return TestWriteSerializer(contentType)
+func newFakeWriteSerializer(contentType string) Serializer {
+	return FakeWriteSerializer(contentType)
 }
-func (this TestWriteSerializer) ContentType() string { return string(this) }
-func (this TestWriteSerializer) Serialize(writer io.Writer, value interface{}) error {
+func (this FakeWriteSerializer) ContentType() string { return string(this) }
+func (this FakeWriteSerializer) Serialize(writer io.Writer, value interface{}) error {
 	raw, _ := json.Marshal(value)
 	_, _ = io.WriteString(writer, "{"+strings.ReplaceAll(string(raw), `"`, ``)+"}")
 	return nil

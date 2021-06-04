@@ -11,13 +11,13 @@ func TestHandler_ReadFailure_RenderErrorToResponse(t *testing.T) {
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", "/", nil)
 	readers := []Reader{
-		newTestReader(t, 0, nil, request),
-		newTestReader(t, 1, nil, request),
-		newTestReader(t, 2, "fail", request),
-		newTestReader(t, 10, nil, request), // should never be called
+		newFakeReader(t, 0, nil, request),
+		newFakeReader(t, 1, nil, request),
+		newFakeReader(t, 2, "fail", request),
+		newFakeReader(t, 10, nil, request), // should never be called
 	}
-	writer := newTestCaptureWriter(t, response, request)
-	input := newSequentialInputModel()
+	writer := newFakeCaptureWriter(t, response, request)
+	input := newFakeSequentialInputModel()
 	handler := newHandler(input, readers, nil, writer)
 
 	handler.ServeHTTP(response, request)
@@ -27,10 +27,10 @@ func TestHandler_ReadFailure_RenderErrorToResponse(t *testing.T) {
 func TestHandler_RenderProcessorResultToResponse(t *testing.T) {
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", "/", nil)
-	readers := []Reader{newTestReader(t, 0, nil, request)}
-	writer := newTestCaptureWriter(t, response, request)
-	input := newSequentialInputModel()
-	processor := newTestProcessor(t, request.Context(), input, "success")
+	readers := []Reader{newFakeReader(t, 0, nil, request)}
+	writer := newFakeCaptureWriter(t, response, request)
+	input := newFakeSequentialInputModel()
+	processor := newFakeProcessor(t, request.Context(), input, "success")
 	handler := newHandler(input, readers, processor, writer)
 
 	handler.ServeHTTP(response, request)
@@ -40,45 +40,47 @@ func TestHandler_RenderProcessorResultToResponse(t *testing.T) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type TestReader struct {
+type FakeReader struct {
 	t               *testing.T
 	expectedRequest *http.Request
 	callSequence    int
 	result          interface{}
 }
 
-func newTestReader(t *testing.T, expectedSequence int, result interface{}, request *http.Request) Reader {
-	return &TestReader{t: t, callSequence: expectedSequence, result: result, expectedRequest: request}
+func newFakeReader(t *testing.T, expectedSequence int, result interface{}, request *http.Request) Reader {
+	return &FakeReader{t: t, callSequence: expectedSequence, result: result, expectedRequest: request}
 }
 
-func (this *TestReader) Read(input InputModel, request *http.Request) interface{} {
-	sequential := input.(*SequentialInputModel)
+func (this *FakeReader) Read(input InputModel, request *http.Request) interface{} {
+	sequential := input.(*FakeSequentialInputModel)
 	Assert(this.t).That(this.expectedRequest).Equals(request)
 	Assert(this.t).That(this.callSequence).Equals(sequential.ID)
 	sequential.ID++
 	return this.result
 }
 
-type SequentialInputModel struct{ ID int }
+type FakeSequentialInputModel struct{ ID int }
 
-func newSequentialInputModel() *SequentialInputModel        { return &SequentialInputModel{ID: 42} } // garbage init
-func (this *SequentialInputModel) Reset()                   { this.ID = 0 }
-func (this *SequentialInputModel) Bind(*http.Request) error { return nil }
-func (this *SequentialInputModel) Validate([]error) int     { return 0 }
+func newFakeSequentialInputModel() *FakeSequentialInputModel {
+	return &FakeSequentialInputModel{ID: 42}
+}                                                               // garbage init
+func (this *FakeSequentialInputModel) Reset()                   { this.ID = 0 }
+func (this *FakeSequentialInputModel) Bind(*http.Request) error { return nil }
+func (this *FakeSequentialInputModel) Validate([]error) int     { return 0 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type TestProcessor struct {
+type FakeProcessor struct {
 	t             *testing.T
 	expectedCtx   context.Context
 	expectedInput interface{}
 	result        interface{}
 }
 
-func newTestProcessor(t *testing.T, expectedCtx context.Context, expectedInput, result interface{}) *TestProcessor {
-	return &TestProcessor{t: t, expectedCtx: expectedCtx, expectedInput: expectedInput, result: result}
+func newFakeProcessor(t *testing.T, expectedCtx context.Context, expectedInput, result interface{}) *FakeProcessor {
+	return &FakeProcessor{t: t, expectedCtx: expectedCtx, expectedInput: expectedInput, result: result}
 }
-func (this *TestProcessor) Process(ctx context.Context, input interface{}) interface{} {
+func (this *FakeProcessor) Process(ctx context.Context, input interface{}) interface{} {
 	Assert(this.t).That(ctx).Equals(this.expectedCtx)
 	Assert(this.t).That(input).Equals(this.expectedInput)
 	return this.result
@@ -86,18 +88,18 @@ func (this *TestProcessor) Process(ctx context.Context, input interface{}) inter
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type TestWriter struct {
+type FakeCaptureWriter struct {
 	t        *testing.T
 	response http.ResponseWriter
 	request  *http.Request
 	result   interface{}
 }
 
-func newTestCaptureWriter(t *testing.T, response http.ResponseWriter, request *http.Request) *TestWriter {
-	return &TestWriter{t: t, response: response, request: request}
+func newFakeCaptureWriter(t *testing.T, response http.ResponseWriter, request *http.Request) *FakeCaptureWriter {
+	return &FakeCaptureWriter{t: t, response: response, request: request}
 }
 
-func (this *TestWriter) Write(response http.ResponseWriter, request *http.Request, result interface{}) {
+func (this *FakeCaptureWriter) Write(response http.ResponseWriter, request *http.Request, result interface{}) {
 	Assert(this.t).That(response).Equals(this.response)
 	Assert(this.t).That(request).Equals(this.request)
 	this.result = result

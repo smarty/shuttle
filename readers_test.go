@@ -62,7 +62,7 @@ func TestDeserializeReader_KnownAdvancedContentType_Success(t *testing.T) {
 	assertDeserializeReader(t, nil, []string{"application/json; charset=utf-8"}, nil)
 }
 func assertDeserializeReader(t *testing.T, expectedResult interface{}, contentTypes []string, deserializeError error) {
-	input := &TestInputModel{}
+	input := &FakeInputModel{}
 	request := httptest.NewRequest("GET", "/", nil)
 	request.Header["Content-Type"] = contentTypes
 
@@ -71,7 +71,7 @@ func assertDeserializeReader(t *testing.T, expectedResult interface{}, contentTy
 		errToCallback = err
 		return expectedResult
 	}
-	deserializer := &TestDeserializer{err: deserializeError}
+	deserializer := &FakeDeserializer{err: deserializeError}
 	factories := map[string]func() Deserializer{
 		"application/json": func() Deserializer { return deserializer },
 	}
@@ -91,7 +91,7 @@ func assertDeserializeReader(t *testing.T, expectedResult interface{}, contentTy
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func TestBindReader_NoErrors(t *testing.T) {
-	input := &TestInputModel{}
+	input := &FakeInputModel{}
 	request := httptest.NewRequest("GET", "/", nil)
 
 	result := newBindReader(nil).Read(input, request)
@@ -101,7 +101,7 @@ func TestBindReader_NoErrors(t *testing.T) {
 }
 func TestBindReader_Error(t *testing.T) {
 	var bindError error
-	input := &TestInputModel{bindError: errors.New("bind error")}
+	input := &FakeInputModel{bindError: errors.New("bind error")}
 	request := httptest.NewRequest("GET", "/", nil)
 
 	result := newBindReader(func(err error) interface{} {
@@ -116,14 +116,14 @@ func TestBindReader_Error(t *testing.T) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func TestValidateReader_NoErrors(t *testing.T) {
-	input := &TestInputModel{}
+	input := &FakeInputModel{}
 
 	result := newValidateReader(nil, 4).Read(input, nil)
 
 	Assert(t).That(result).IsNil()
 }
 func TestValidateReader_ErrorResult(t *testing.T) {
-	input := &TestInputModel{
+	input := &FakeInputModel{
 		validationErrors: []error{errors.New("1"), errors.New("2")},
 	}
 	var errorsProvidedToFactor []error
@@ -137,18 +137,18 @@ func TestValidateReader_ErrorResult(t *testing.T) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type TestInputModel struct {
+type FakeInputModel struct {
 	boundRequest     *http.Request
 	bindError        error
 	validationErrors []error
 }
 
-func (this *TestInputModel) Reset() {}
-func (this *TestInputModel) Bind(request *http.Request) error {
+func (this *FakeInputModel) Reset() {}
+func (this *FakeInputModel) Bind(request *http.Request) error {
 	this.boundRequest = request
 	return this.bindError
 }
-func (this *TestInputModel) Validate(errs []error) int {
+func (this *FakeInputModel) Validate(errs []error) int {
 	for i := range this.validationErrors {
 		errs[i] = this.validationErrors[i]
 	}
@@ -158,13 +158,13 @@ func (this *TestInputModel) Validate(errs []error) int {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type TestDeserializer struct {
+type FakeDeserializer struct {
 	source io.Reader
 	target interface{}
 	err    error
 }
 
-func (this *TestDeserializer) Deserialize(target interface{}, source io.Reader) error {
+func (this *FakeDeserializer) Deserialize(target interface{}, source io.Reader) error {
 	this.target = target
 	this.source = source
 	return this.err
