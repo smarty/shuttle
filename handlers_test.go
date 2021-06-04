@@ -14,7 +14,7 @@ func TestHandler_ReadFailure_RenderErrorToResponse(t *testing.T) {
 		newTestReader(t, 0, nil, request),
 		newTestReader(t, 1, nil, request),
 		newTestReader(t, 2, "fail", request),
-		newTestReader(t, 10, nil, request), // never called
+		newTestReader(t, 10, nil, request), // should never be called
 	}
 	writer := newTestCaptureWriter(t, response, request)
 	input := newSequentialInputModel()
