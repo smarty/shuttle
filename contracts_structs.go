@@ -73,18 +73,19 @@ type InputError struct {
 	Message string `json:"message,omitempty"`
 }
 
-type ErrorResult struct {
+func (this InputError) Error() string { return this.Message }
+
+// InputErrors represents a set of problems with the calling HTTP request.
+type InputErrors struct {
 	Errors []InputError `json:"errors"`
 }
-
-func (this InputError) Error() string { return this.Message }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 var (
 	unsupportedMediaTypeResult = &SerializeResult{
 		StatusCode: http.StatusUnsupportedMediaType,
-		Content: ErrorResult{Errors: []InputError{{
+		Content: InputErrors{Errors: []InputError{{
 			Fields:  []string{"header:Content-Type"},
 			Name:    "invalid-content-type-header",
 			Message: "The content type specified, if any, was not recognized.",
@@ -92,7 +93,7 @@ var (
 	}
 	deserializationResult = &SerializeResult{
 		StatusCode: http.StatusBadRequest,
-		Content: ErrorResult{Errors: []InputError{{
+		Content: InputErrors{Errors: []InputError{{
 			Fields:  []string{"body"},
 			Name:    "malformed-request-payload",
 			Message: "The body did not contain well-formed data and could not be properly deserialized.",
@@ -100,7 +101,7 @@ var (
 	}
 	bindFailedResult = &SerializeResult{
 		StatusCode: http.StatusBadRequest,
-		Content: ErrorResult{Errors: []InputError{{
+		Content: InputErrors{Errors: []InputError{{
 			Fields:  []string{"body"},
 			Name:    "malformed-request-payload",
 			Message: "Unable to bind the HTTP request values onto the appropriate data structure.",
@@ -109,7 +110,7 @@ var (
 	notAcceptableResult = &TextResult{
 		StatusCode:  http.StatusNotAcceptable,
 		ContentType: mimeTypeApplicationJSONUTF8,
-		Content: _serializeJSON(ErrorResult{Errors: []InputError{{
+		Content: _serializeJSON(InputErrors{Errors: []InputError{{
 			Fields:  []string{"header:Accept"},
 			Name:    "invalid-accept-header",
 			Message: "Unable to represent the application results using the Accept type.",
