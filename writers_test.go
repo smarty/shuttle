@@ -136,6 +136,24 @@ type HTTPResponse struct {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+func TestJSONPCallbackQueryStringParsing(t *testing.T) {
+	assertJSONPQueryStringCallback(t, "callback=jsonCallback", "jsonCallback")                           // simple
+	assertJSONPQueryStringCallback(t, "key=&callback=jsonCallback", "jsonCallback")                      // multiple keys
+	assertJSONPQueryStringCallback(t, "key=value&callback=jsonCallback", "jsonCallback")                 // multiple keys and values
+	assertJSONPQueryStringCallback(t, "key=&=value&callback=jsonCallback&other=stuff", "jsonCallback")   // blank keys and values
+	assertJSONPQueryStringCallback(t, "callback=_json_Callback_0123456789", "_json_Callback_0123456789") // complex callback name
+	assertJSONPQueryStringCallback(t, "key=&=value&other=stuff", "callback")                             // doesn't exist, use default
+	assertJSONPQueryStringCallback(t, "callback=malicious!", "callback")                                 // malicious
+	assertJSONPQueryStringCallback(t, "callback=<malicious>", "callback")                                // malicious
+	assertJSONPQueryStringCallback(t, "callback=alert('malicious');", "callback")                        // malicious
+
+}
+func assertJSONPQueryStringCallback(t *testing.T, raw, callback string) {
+	Assert(t).That(parseCallbackParameter(raw)).Equals(callback)
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type FakeHTTPHandlerResult struct {
 	response http.ResponseWriter
 	request  *http.Request
