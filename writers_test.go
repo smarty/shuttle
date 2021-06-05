@@ -84,6 +84,11 @@ func TestWrite(t *testing.T) {
 			Accept:       "application/xml;q=0.8", // simplify and use correct serializer
 			HTTPResponse: HTTPResponse{StatusCode: 200, ContentType: []string{"application/xml; charset=utf-8"}, Body: "{body}"}},
 
+		{Input: &JSONPResult{StatusCode: 201, ContentType: "", Content: "body"},
+			HTTPResponse: HTTPResponse{StatusCode: 201, ContentType: []string{"application/javascript; charset=utf-8"}, Body: "callback({body})"}},
+		{Input: JSONPResult{StatusCode: 201, ContentType: "", Content: "body"},
+			HTTPResponse: HTTPResponse{StatusCode: 201, ContentType: []string{"application/javascript; charset=utf-8"}, Body: "callback({body})"}},
+
 		{Input: 42, // use serializer for unknown type
 			HTTPResponse: HTTPResponse{StatusCode: 200, ContentType: []string{"application/json; charset=utf-8"}, Body: "{42}"}},
 	}

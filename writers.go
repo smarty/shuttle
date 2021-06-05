@@ -146,21 +146,11 @@ func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, reques
 
 	this.writeHeader(response, typed.StatusCode, contentType, true)
 
-	if _, err = io.WriteString(response, callbackFunction); err != nil {
-		return err
-	}
-	if _, err = io.WriteString(response, "("); err != nil {
-		return err
-	}
-
+	_, _ = io.WriteString(response, callbackFunction)
+	_, _ = io.WriteString(response, "(")
 	serializer := this.loadSerializer(headerAcceptTypeJavascription)
-	if err = serializer.Serialize(response, typed.Content); err != nil {
-		return err
-	}
-
-	if _, err = io.WriteString(response, ")"); err != nil {
-		return err
-	}
+	err = serializer.Serialize(response, typed.Content)
+	_, _ = io.WriteString(response, ")")
 
 	return err
 }
