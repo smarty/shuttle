@@ -168,6 +168,18 @@ var (
 			},
 		}
 	}
+	parseFormedFailedResult = &SerializeResult{
+		StatusCode: http.StatusBadRequest,
+		Content: InputErrors{
+			Errors: []error{
+				InputError{
+					Fields:  []string{"form"},
+					Name:    "invalid-form-data",
+					Message: "The form data provided was not valid and could not be parsed.",
+				},
+			},
+		},
+	}
 	bindErrorResultFactory = func() ContentResult {
 		return &bindErrorResult{
 			SerializeResult: &SerializeResult{

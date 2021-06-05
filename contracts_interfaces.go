@@ -85,6 +85,8 @@ type Monitor interface {
 	UnsupportedMediaType()
 	Deserialize()
 	DeserializeFailed()
+	ParseForm()
+	ParseFormFailed(error)
 	Bind()
 	BindFailed(error)
 	Validate()

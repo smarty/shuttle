@@ -11,6 +11,7 @@ type configuration struct {
 	Deserializers               map[string]func() Deserializer
 	Serializers                 map[string]func() Serializer
 	VerifyAcceptHeader          bool
+	ParseForm                   bool
 	Bind                        bool
 	Validate                    bool
 	MaxValidationErrors         int
@@ -19,6 +20,7 @@ type configuration struct {
 	NotAcceptableResult         *TextResult
 	UnsupportedMediaTypeResult  interface{}
 	DeserializationFailedResult func() ContentResult
+	ParseFormFailedResult       interface{}
 	BindFailedResult            func() ContentResult
 	ValidationFailedResult      func() ContentResult
 	Monitor                     Monitor
@@ -117,6 +119,11 @@ func (singleton) VerifyAcceptHeader(value bool) Option {
 	return func(this *configuration) { this.VerifyAcceptHeader = value }
 }
 
+// ParseForm indicates whether or not to call ParseForm() on the incoming HTTP request.
+func (singleton) ParseForm(value bool) Option {
+	return func(this *configuration) { this.ParseForm = value }
+}
+
 // Bind indicates whether or not to forward the raw HTTP request into the InputModel to bind parts of the request onto
 // a pooled instanced of the InputModel configured for this route.
 func (singleton) Bind(value bool) Option {
@@ -155,6 +162,12 @@ func (singleton) UnsupportedMediaTypeResult(value interface{}) Option {
 // when the HTTP request body cannot be deserialized into the configured InputModel.
 func (singleton) DeserializationFailedResult(value func() ContentResult) Option {
 	return func(this *configuration) { this.DeserializationFailedResult = value }
+}
+
+// ParseFormFailedResult registers the result to be written to the underlying HTTP response stream to indicate when
+// parsing the form and query fields of the HTTP request have failed.
+func (singleton) ParseFormFailedResult(value interface{}) Option {
+	return func(this *configuration) { this.ParseFormFailedResult = value }
 }
 
 // BindFailedResult registers the result to be written to the underlying HTTP response stream to indicate when the HTTP
@@ -198,6 +211,10 @@ func (singleton) apply(options ...Option) Option {
 			})
 		}
 
+		if this.ParseForm {
+			this.Readers = append(this.Readers, func() Reader { return newParseFormReader(this.ParseFormFailedResult, this.Monitor) })
+		}
+
 		if this.Bind {
 			this.Readers = append(this.Readers, func() Reader { return newBindReader(this.BindFailedResult(), this.Monitor) })
 		}
@@ -219,6 +236,7 @@ func (singleton) defaults(options ...Option) []Option {
 		Options.ProcessorSharedInstance(&nop{}),
 
 		Options.VerifyAcceptHeader(true),
+		Options.ParseForm(false),
 		Options.Bind(true),
 		Options.Validate(true),
 		Options.MaxValidationErrors(32),
@@ -230,6 +248,7 @@ func (singleton) defaults(options ...Option) []Option {
 
 		Options.NotAcceptableResult(notAcceptableResult),
 		Options.UnsupportedMediaTypeResult(unsupportedMediaTypeResult),
+		Options.ParseFormFailedResult(parseFormedFailedResult),
 		Options.DeserializationFailedResult(deserializationResultFactory),
 		Options.BindFailedResult(bindErrorResultFactory),
 		Options.ValidationFailedResult(validationResultFactory),
@@ -260,6 +279,8 @@ func (*nopMonitor) NotAcceptable()         {}
 func (*nopMonitor) UnsupportedMediaType()  {}
 func (*nopMonitor) Deserialize()           {}
 func (*nopMonitor) DeserializeFailed()     {}
+func (*nopMonitor) ParseForm()             {}
+func (*nopMonitor) ParseFormFailed(error)  {}
 func (*nopMonitor) Bind()                  {}
 func (*nopMonitor) BindFailed(error)       {}
 func (*nopMonitor) Validate()              {}

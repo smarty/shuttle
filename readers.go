@@ -115,6 +115,30 @@ func (this *deserializeReader) loadDeserializer(contentTypes []string) Deseriali
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type parseFormReader struct {
+	result  interface{}
+	monitor Monitor
+}
+
+func newParseFormReader(result interface{}, monitor Monitor) Reader {
+	return &parseFormReader{
+		result:  result,
+		monitor: monitor,
+	}
+}
+
+func (this *parseFormReader) Read(_ InputModel, request *http.Request) interface{} {
+	this.monitor.ParseForm()
+	if err := request.ParseForm(); err != nil {
+		this.monitor.ParseFormFailed(err)
+		return this.result
+	}
+
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type bindReader struct {
 	result  ContentResult
 	monitor Monitor
