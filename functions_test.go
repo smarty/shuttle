@@ -6,6 +6,7 @@ func TestReadPathElement(t *testing.T) {
 	assertPathElement(t, "/path/users/value", "users", "value")
 	assertPathElement(t, "/path/users/value/", "users", "value")
 	assertPathElement(t, "/path/users/value/other/stuff", "users", "value")
+	assertPathElement(t, "/not/found/", "users", "")
 }
 func assertPathElement(t *testing.T, raw, element, expected string) {
 	Assert(t).That(ReadPathElement(raw, element)).Equals(expected)
