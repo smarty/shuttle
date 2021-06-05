@@ -154,7 +154,7 @@ func TestJSONPCallbackQueryStringParsing(t *testing.T) {
 
 }
 func assertJSONPQueryStringCallback(t *testing.T, raw, callback string) {
-	Assert(t).That(parseCallbackParameter(raw)).Equals(callback)
+	Assert(t).That(parseJSONPCallbackQueryStringParameter(raw)).Equals(callback)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

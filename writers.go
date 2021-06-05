@@ -137,7 +137,7 @@ func (this *defaultWriter) loadSerializer(acceptTypes []string) Serializer {
 	return this.defaultSerializer
 }
 func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, request *http.Request, typed *JSONPResult) (err error) {
-	callbackFunction := parseCallbackParameter(request.URL.RawQuery)
+	callbackFunction := parseJSONPCallbackQueryStringParameter(request.URL.RawQuery)
 
 	contentType := typed.ContentType
 	if len(contentType) == 0 {
@@ -154,7 +154,7 @@ func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, reques
 
 	return err
 }
-func parseCallbackParameter(query string) string {
+func parseJSONPCallbackQueryStringParameter(query string) string {
 	var key, value string
 	for len(query) > 0 {
 		key = query
@@ -169,17 +169,17 @@ func parseCallbackParameter(query string) string {
 			key, value = key[:i], key[i+1:]
 		}
 
-		if key == "callback" {
-			return sanitizeJSONPCallback(value)
+		if key == defaultJSONPCallbackParameter {
+			return sanitizeJSONPCallbackValue(value)
 		}
 	}
 
-	return "callback"
+	return defaultJSONPCallbackName
 }
-func sanitizeJSONPCallback(raw string) string {
+func sanitizeJSONPCallbackValue(raw string) string {
 	for _, item := range raw {
 		if (item < 'a' || item > 'z') && (item < 'A' || item > 'Z') && (item < '0' || item > '9') && (item != '_') {
-			return "callback"
+			return defaultJSONPCallbackName
 		}
 	}
 

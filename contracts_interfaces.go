@@ -120,7 +120,9 @@ const (
 	headerAccept         = "Accept"
 	headerAcceptAnyValue = "*/*"
 
-	defaultSerializerContentType = ""
+	defaultSerializerContentType  = ""
+	defaultJSONPCallbackParameter = "callback"
+	defaultJSONPCallbackName      = "callback"
 )
 
 var (
