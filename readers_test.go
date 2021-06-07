@@ -23,6 +23,9 @@ func TestAcceptReader_MultipleComplexAcceptTypesProvided_Found_OverwriteAccept(t
 func TestAcceptReader_WildcardAcceptTypeProvided_Found_OverwriteAccept(t *testing.T) {
 	assertAcceptReader(t, "", []string{"*/*"}, nil)
 }
+func TestAcceptReader_RealWorldExampleWithWildcard_Found(t *testing.T) {
+	assertAcceptReader(t, "", []string{"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"}, nil)
+}
 func assertAcceptReader(t *testing.T, expectedResult string, acceptTypes, acceptTypesWhenSuccessful []string) {
 	request := httptest.NewRequest("GET", "/", nil)
 	request.Header["Accept"] = acceptTypes

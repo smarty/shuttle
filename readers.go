@@ -46,9 +46,10 @@ func (this *acceptReader) findAcceptType(acceptTypes []string) ([]string, bool) 
 				item = value
 			}
 
-			if item = strings.TrimSpace(item); item == headerAcceptAnyValue {
+			item = normalizeMediaType(item)
+			if item == headerAcceptAnyValue {
 				return nil, true // default
-			} else if types, contains := this.acceptable[normalizeMediaType(item)]; contains {
+			} else if types, contains := this.acceptable[item]; contains {
 				return types, true
 			} else if index == -1 {
 				break
