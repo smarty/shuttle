@@ -28,6 +28,9 @@ type BinaryResult struct {
 	// ContentType, if provided, use this value.
 	ContentType string
 
+	// ContentDisposition, if provided, use this value.
+	ContentDisposition string
+
 	// Content, if provided, use this value, otherwise no content will be written to the response stream.
 	Content []byte
 }
@@ -40,6 +43,9 @@ type StreamResult struct {
 
 	// ContentType, if provided, use this value.
 	ContentType string
+
+	// ContentDisposition, if provided, use this value.
+	ContentDisposition string
 
 	// Content, if provided, use this value, otherwise no content will be written to the response stream.
 	Content io.Reader

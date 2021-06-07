@@ -43,10 +43,12 @@ func TestWrite(t *testing.T) {
 
 		{Input: &BinaryResult{StatusCode: 404, ContentType: "no-expected-content-type-for-empty-body", Content: nil},
 			HTTPResponse: HTTPResponse{StatusCode: 404, ContentType: nil, Body: ""}},
-		{Input: BinaryResult{StatusCode: 404, ContentType: "no-expected-content-type-for-empty-body", Content: nil},
+		{Input: BinaryResult{StatusCode: 404, ContentType: "no-expected-content-type-for-empty-body", ContentDisposition: "no-expected-content-disposition-for-empty-body", Content: nil},
 			HTTPResponse: HTTPResponse{StatusCode: 404, ContentType: nil, Body: ""}},
-		{Input: &BinaryResult{StatusCode: 404, ContentType: "", Content: []byte("body")},
-			HTTPResponse: HTTPResponse{StatusCode: 404, ContentType: nil, Body: "body"}},
+		{Input: &BinaryResult{StatusCode: 404, ContentType: "custom-type", Content: []byte("body")},
+			HTTPResponse: HTTPResponse{StatusCode: 404, ContentType: []string{"custom-type"}, Body: "body"}},
+		{Input: BinaryResult{StatusCode: 404, ContentType: "", ContentDisposition: "custom-disposition", Content: []byte("body")},
+			HTTPResponse: HTTPResponse{StatusCode: 404, ContentType: nil, ContentDisposition: []string{"custom-disposition"}, Body: "body"}},
 		{Input: BinaryResult{StatusCode: 404, ContentType: "", Content: []byte("body")},
 			HTTPResponse: HTTPResponse{StatusCode: 404, ContentType: nil, Body: "body"}},
 
@@ -54,10 +56,14 @@ func TestWrite(t *testing.T) {
 			HTTPResponse: HTTPResponse{StatusCode: 404, ContentType: nil, Body: ""}},
 		{Input: StreamResult{StatusCode: 404, ContentType: "no-expected-content-type-for-empty-body", Content: nil},
 			HTTPResponse: HTTPResponse{StatusCode: 404, ContentType: nil, Body: ""}},
+		{Input: StreamResult{StatusCode: 404, ContentType: "no-expected-content-type-for-empty-body", ContentDisposition: "no-expected-content-disposition-for-empty-body", Content: nil},
+			HTTPResponse: HTTPResponse{StatusCode: 404, ContentType: nil, ContentDisposition: nil, Body: ""}},
 		{Input: &StreamResult{StatusCode: 404, ContentType: "", Content: bytes.NewBufferString("body")},
 			HTTPResponse: HTTPResponse{StatusCode: 404, ContentType: nil, Body: "body"}},
 		{Input: StreamResult{StatusCode: 422, ContentType: "application/custom", Content: bytes.NewBufferString("body")},
 			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/custom"}, Body: "body"}},
+		{Input: StreamResult{StatusCode: 422, ContentType: "application/custom", ContentDisposition: "custom-disposition", Content: bytes.NewBufferString("body")},
+			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/custom"}, ContentDisposition: []string{"custom-disposition"}, Body: "body"}},
 
 		{Input: &SerializeResult{StatusCode: 401, ContentType: "no-expected-content-type-for-empty-body", Content: nil},
 			HTTPResponse: HTTPResponse{StatusCode: 401, ContentType: nil, Body: ""}},
@@ -119,6 +125,7 @@ func newTestWriter() Writer {
 func assertResponse(t *testing.T, response *httptest.ResponseRecorder, expected HTTPResponse) {
 	Assert(t).That(response.Code).Equals(expected.StatusCode)
 	Assert(t).That(response.Header()["Content-Type"]).Equals(expected.ContentType)
+	Assert(t).That(response.Header()["Content-Disposition"]).Equals(expected.ContentDisposition)
 	Assert(t).That(response.Body.String()).Equals(expected.Body)
 }
 
@@ -134,9 +141,10 @@ func TestWriteHTTPHandler(t *testing.T) {
 }
 
 type HTTPResponse struct {
-	StatusCode  int
-	ContentType []string
-	Body        string
+	StatusCode         int
+	ContentType        []string
+	ContentDisposition []string
+	Body               string
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

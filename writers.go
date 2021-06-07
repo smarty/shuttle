@@ -7,12 +7,13 @@ import (
 )
 
 type defaultWriter struct {
-	serializers       map[string]Serializer
-	defaultSerializer Serializer
-	monitor           Monitor
-	bodyBuffer        []byte
-	headerBuffer      []string
-	serializeBuffer   *SerializeResult
+	serializers              map[string]Serializer
+	defaultSerializer        Serializer
+	monitor                  Monitor
+	bodyBuffer               []byte
+	contentTypeBuffer        []string
+	contentDispositionBuffer []string
+	serializeBuffer          *SerializeResult
 }
 
 func newWriter(serializerFactories map[string]func() Serializer, monitor Monitor) Writer {
@@ -22,12 +23,13 @@ func newWriter(serializerFactories map[string]func() Serializer, monitor Monitor
 	}
 
 	return &defaultWriter{
-		serializers:       serializers,
-		defaultSerializer: serializers[defaultSerializerContentType],
-		monitor:           monitor,
-		bodyBuffer:        make([]byte, 1024*4),
-		headerBuffer:      make([]string, 1),
-		serializeBuffer:   &SerializeResult{},
+		serializers:              serializers,
+		defaultSerializer:        serializers[defaultSerializerContentType],
+		monitor:                  monitor,
+		bodyBuffer:               make([]byte, 1024*4),
+		contentTypeBuffer:        make([]string, 1),
+		contentDispositionBuffer: make([]string, 1),
+		serializeBuffer:          &SerializeResult{},
 	}
 }
 
@@ -83,7 +85,7 @@ func (this *defaultWriter) write(response http.ResponseWriter, request *http.Req
 func (this *defaultWriter) writeTextResult(response http.ResponseWriter, typed *TextResult) (err error) {
 	this.monitor.TextResult()
 	hasContent := len(typed.Content) > 0
-	this.writeHeader(response, typed.StatusCode, typed.ContentType, hasContent)
+	this.writeHeader(response, typed.StatusCode, typed.ContentType, "", hasContent)
 	if hasContent {
 		_, err = io.WriteString(response, typed.Content)
 	}
@@ -93,7 +95,7 @@ func (this *defaultWriter) writeTextResult(response http.ResponseWriter, typed *
 func (this *defaultWriter) writeBinaryResult(response http.ResponseWriter, typed *BinaryResult) (err error) {
 	this.monitor.BinaryResult()
 	hasContent := len(typed.Content) > 0
-	this.writeHeader(response, typed.StatusCode, typed.ContentType, hasContent)
+	this.writeHeader(response, typed.StatusCode, typed.ContentType, typed.ContentDisposition, hasContent)
 	if hasContent {
 		_, err = response.Write(typed.Content)
 	}
@@ -103,7 +105,7 @@ func (this *defaultWriter) writeBinaryResult(response http.ResponseWriter, typed
 func (this *defaultWriter) writeStreamResult(response http.ResponseWriter, typed *StreamResult) (err error) {
 	this.monitor.StreamResult()
 	hasContent := typed.Content != nil
-	this.writeHeader(response, typed.StatusCode, typed.ContentType, hasContent)
+	this.writeHeader(response, typed.StatusCode, typed.ContentType, typed.ContentDisposition, hasContent)
 	if hasContent {
 		_, err = io.CopyBuffer(response, typed.Content, this.bodyBuffer)
 	}
@@ -120,7 +122,7 @@ func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, re
 		contentType = serializer.ContentType()
 	}
 
-	this.writeHeader(response, typed.StatusCode, contentType, hasContent)
+	this.writeHeader(response, typed.StatusCode, contentType, "", hasContent)
 	if hasContent {
 		return serializer.Serialize(response, typed.Content)
 	}
@@ -144,7 +146,7 @@ func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, reques
 		contentType = mimeTypeApplicationJavascriptUTF8
 	}
 
-	this.writeHeader(response, typed.StatusCode, contentType, true)
+	this.writeHeader(response, typed.StatusCode, contentType, "", true)
 
 	_, _ = io.WriteString(response, callbackFunction)
 	_, _ = io.WriteString(response, "(")
@@ -216,10 +218,14 @@ func (this *defaultWriter) writeBoolResult(response http.ResponseWriter, typed b
 	return err
 }
 
-func (this *defaultWriter) writeHeader(response http.ResponseWriter, statusCode int, contentType string, hasContent bool) {
+func (this *defaultWriter) writeHeader(response http.ResponseWriter, statusCode int, contentType, contentDisposition string, hasContent bool) {
 	if hasContent && len(contentType) > 0 {
-		this.headerBuffer[0] = contentType
-		response.Header()[headerContentType] = this.headerBuffer
+		this.contentTypeBuffer[0] = contentType
+		response.Header()[headerContentType] = this.contentTypeBuffer
+	}
+	if hasContent && len(contentDisposition) > 0 {
+		this.contentDispositionBuffer[0] = contentDisposition
+		response.Header()[headerContentDisposition] = this.contentDispositionBuffer
 	}
 
 	if statusCode > 0 {

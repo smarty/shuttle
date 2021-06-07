@@ -118,9 +118,10 @@ const (
 
 	characterSetUTF8 = "; charset=utf-8"
 
-	headerContentType    = "Content-Type"
-	headerAccept         = "Accept"
-	headerAcceptAnyValue = "*/*"
+	headerContentType        = "Content-Type"
+	headerContentDisposition = "Content-Disposition"
+	headerAccept             = "Accept"
+	headerAcceptAnyValue     = "*/*"
 
 	defaultSerializerContentType  = ""
 	defaultJSONPCallbackParameter = "callback"
