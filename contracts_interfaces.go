@@ -32,8 +32,8 @@ type Reader interface {
 	Read(InputModel, *http.Request) interface{}
 }
 
-// ContentResult sets the content on the underlying instance.
-type ContentResult interface {
+// ResultContainer sets the content on the underlying instance.
+type ResultContainer interface {
 	SetContent(interface{})
 	Result() interface{}
 }

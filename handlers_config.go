@@ -19,10 +19,10 @@ type configuration struct {
 	Writer                      func() Writer
 	NotAcceptableResult         *TextResult
 	UnsupportedMediaTypeResult  interface{}
-	DeserializationFailedResult func() ContentResult
+	DeserializationFailedResult func() ResultContainer
 	ParseFormFailedResult       interface{}
-	BindFailedResult            func() ContentResult
-	ValidationFailedResult      func() ContentResult
+	BindFailedResult            func() ResultContainer
+	ValidationFailedResult      func() ResultContainer
 	Monitor                     Monitor
 }
 
@@ -160,7 +160,7 @@ func (singleton) UnsupportedMediaTypeResult(value interface{}) Option {
 
 // DeserializationFailedResult registers the result to be written to the underlying HTTP response stream to indicate
 // when the HTTP request body cannot be deserialized into the configured InputModel.
-func (singleton) DeserializationFailedResult(value func() ContentResult) Option {
+func (singleton) DeserializationFailedResult(value func() ResultContainer) Option {
 	return func(this *configuration) { this.DeserializationFailedResult = value }
 }
 
@@ -172,13 +172,13 @@ func (singleton) ParseFormFailedResult(value interface{}) Option {
 
 // BindFailedResult registers the result to be written to the underlying HTTP response stream to indicate when the HTTP
 // request cannot be properly bound or mapped onto the configured InputModel.
-func (singleton) BindFailedResult(value func() ContentResult) Option {
+func (singleton) BindFailedResult(value func() ResultContainer) Option {
 	return func(this *configuration) { this.BindFailedResult = value }
 }
 
 // ValidationFailedResult registers the result to be written to the underlying HTTP response stream to indicate when the
 // HTTP request contains validation errors according to the provided InputModel.
-func (singleton) ValidationFailedResult(value func() ContentResult) Option {
+func (singleton) ValidationFailedResult(value func() ResultContainer) Option {
 	return func(this *configuration) { this.ValidationFailedResult = value }
 }
 

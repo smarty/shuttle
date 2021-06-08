@@ -102,9 +102,9 @@ type InputErrors struct {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type fixedContentResult struct{ ContentResult }
-type bindErrorResult struct{ *SerializeResult }
-type validationErrorResult struct{ *SerializeResult }
+type fixedResultContainer struct{ ResultContainer }
+type bindErrorContainer struct{ *SerializeResult }
+type validationErrorContainer struct{ *SerializeResult }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -113,22 +113,22 @@ func (this InputError) Error() string { return this.Message }
 func (this *SerializeResult) SetContent(value interface{}) { this.Content = value }
 func (this *SerializeResult) Result() interface{}          { return this }
 
-func (this *fixedContentResult) SetContent(interface{}) {} // no-op
-func (this *fixedContentResult) Result() interface{}    { return this.ContentResult }
+func (this *fixedResultContainer) SetContent(interface{}) {} // no-op
+func (this *fixedResultContainer) Result() interface{}    { return this.ResultContainer }
 
-func (this *bindErrorResult) SetContent(value interface{}) {
+func (this *bindErrorContainer) SetContent(value interface{}) {
 	inputErrors := this.SerializeResult.Content.(*InputErrors)
 	inputErrors.Errors = inputErrors.Errors[0:0]
 	inputErrors.Errors = append(inputErrors.Errors, value.(error))
 }
-func (this *bindErrorResult) Result() interface{} { return this.SerializeResult }
+func (this *bindErrorContainer) Result() interface{} { return this.SerializeResult }
 
-func (this *validationErrorResult) SetContent(value interface{}) {
+func (this *validationErrorContainer) SetContent(value interface{}) {
 	inputErrors := this.SerializeResult.Content.(*InputErrors)
 	inputErrors.Errors = inputErrors.Errors[0:0]
 	inputErrors.Errors = value.([]error)
 }
-func (this *validationErrorResult) Result() interface{} { return this.SerializeResult }
+func (this *validationErrorContainer) Result() interface{} { return this.SerializeResult }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -158,9 +158,9 @@ var (
 			},
 		},
 	}
-	deserializationResultFactory = func() ContentResult {
-		return &fixedContentResult{
-			ContentResult: &SerializeResult{
+	deserializationResultFactory = func() ResultContainer {
+		return &fixedResultContainer{
+			ResultContainer: &SerializeResult{
 				StatusCode: http.StatusBadRequest,
 				Content: InputErrors{
 					Errors: []error{
@@ -186,8 +186,8 @@ var (
 			},
 		},
 	}
-	bindErrorResultFactory = func() ContentResult {
-		return &bindErrorResult{
+	bindErrorResultFactory = func() ResultContainer {
+		return &bindErrorContainer{
 			SerializeResult: &SerializeResult{
 				StatusCode: http.StatusBadRequest,
 				Content:    &InputErrors{},
@@ -195,8 +195,8 @@ var (
 		}
 	}
 
-	validationResultFactory = func() ContentResult {
-		return &validationErrorResult{
+	validationResultFactory = func() ResultContainer {
+		return &validationErrorContainer{
 			SerializeResult: &SerializeResult{
 				StatusCode: http.StatusUnprocessableEntity,
 				Content:    &InputErrors{},

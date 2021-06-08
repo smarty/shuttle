@@ -72,11 +72,11 @@ func normalizeMediaType(value string) string {
 type deserializeReader struct {
 	available                  map[string]Deserializer
 	unsupportedMediaTypeResult interface{}
-	result                     ContentResult
+	result                     ResultContainer
 	monitor                    Monitor
 }
 
-func newDeserializeReader(deserializerFactories map[string]func() Deserializer, unsupportedMediaTypeResult interface{}, result ContentResult, monitor Monitor) Reader {
+func newDeserializeReader(deserializerFactories map[string]func() Deserializer, unsupportedMediaTypeResult interface{}, result ResultContainer, monitor Monitor) Reader {
 	available := make(map[string]Deserializer, len(deserializerFactories))
 	for contentType, factory := range deserializerFactories {
 		available[contentType] = factory()
@@ -141,11 +141,11 @@ func (this *parseFormReader) Read(_ InputModel, request *http.Request) interface
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type bindReader struct {
-	result  ContentResult
+	result  ResultContainer
 	monitor Monitor
 }
 
-func newBindReader(result ContentResult, monitor Monitor) Reader {
+func newBindReader(result ResultContainer, monitor Monitor) Reader {
 	return &bindReader{result: result, monitor: monitor}
 }
 
@@ -163,12 +163,12 @@ func (this *bindReader) Read(target InputModel, request *http.Request) interface
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type validateReader struct {
-	result  ContentResult
+	result  ResultContainer
 	buffer  []error
 	monitor Monitor
 }
 
-func newValidateReader(result ContentResult, bufferSize int, monitor Monitor) Reader {
+func newValidateReader(result ResultContainer, bufferSize int, monitor Monitor) Reader {
 	return &validateReader{result: result, buffer: make([]error, bufferSize), monitor: monitor}
 }
 
