@@ -64,6 +64,9 @@ type SerializeResult struct {
 	Content interface{}
 }
 
+func (this *SerializeResult) SetContent(value interface{}) { this.Content = value }
+func (this *SerializeResult) Result() interface{}          { return this }
+
 // JSONPResult provides the ability render a JSON-P result to the response.
 type JSONPResult struct {
 	// StatusCode, if provided, use this value, otherwise HTTP 200.
@@ -100,18 +103,22 @@ type InputErrors struct {
 	Errors []error `json:"errors,omitempty"`
 }
 
+func (this InputError) Error() string { return this.Message }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// BaseInputModel allows enables struct embedding such that other InputModels don't necessarily need to re-implement each method.
+type BaseInputModel struct{}
+
+func (*BaseInputModel) Reset()                   {}
+func (*BaseInputModel) Bind(*http.Request) error { return nil }
+func (*BaseInputModel) Validate([]error) int     { return 0 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type fixedResultContainer struct{ ResultContainer }
 type bindErrorContainer struct{ *SerializeResult }
 type validationErrorContainer struct{ *SerializeResult }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-func (this InputError) Error() string { return this.Message }
-
-func (this *SerializeResult) SetContent(value interface{}) { this.Content = value }
-func (this *SerializeResult) Result() interface{}          { return this }
 
 func (this *fixedResultContainer) SetContent(interface{}) {} // no-op
 func (this *fixedResultContainer) Result() interface{}    { return this.ResultContainer }
