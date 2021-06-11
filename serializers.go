@@ -5,14 +5,21 @@ import (
 	"io"
 )
 
-type jsonDeserializer struct{}
+type jsonDeserializer struct {
+	decoder *json.Decoder
+	source  struct{ io.Reader }
+}
 
 func newJSONDeserializer() Deserializer {
-	return &jsonDeserializer{}
+	this := &jsonDeserializer{}
+	this.decoder = json.NewDecoder(&this.source)
+	return this
 }
 
 func (this *jsonDeserializer) Deserialize(target interface{}, source io.Reader) error {
-	if err := json.NewDecoder(source).Decode(target); err != nil {
+	this.source.Reader = source
+
+	if err := this.decoder.Decode(target); err != nil {
 		return ErrDeserializationFailure
 	}
 
@@ -21,14 +28,21 @@ func (this *jsonDeserializer) Deserialize(target interface{}, source io.Reader) 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type jsonSerializer struct{}
+type jsonSerializer struct {
+	encoder *json.Encoder
+	target  struct{ io.Writer }
+}
 
 func newJSONSerializer() Serializer {
-	return &jsonSerializer{}
+	this := &jsonSerializer{}
+	this.encoder = json.NewEncoder(&this.target)
+	return this
 }
 
 func (this *jsonSerializer) Serialize(target io.Writer, source interface{}) error {
-	if err := json.NewEncoder(target).Encode(source); err != nil {
+	this.target.Writer = target
+
+	if err := this.encoder.Encode(source); err != nil {
 		return ErrSerializationFailure
 	}
 
