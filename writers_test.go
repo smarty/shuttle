@@ -17,7 +17,7 @@ func TestWrite(t *testing.T) {
 		HTTPResponse
 	}{
 		{Input: nil,
-			HTTPResponse: HTTPResponse{StatusCode: 200, ContentType: nil, Body: ""}},
+			HTTPResponse: HTTPResponse{StatusCode: 204, ContentType: nil, Body: ""}},
 		{Input: "body",
 			HTTPResponse: HTTPResponse{StatusCode: 200, ContentType: []string{"text/plain; charset=utf-8"}, Body: "body"}},
 		{Input: []byte("body"),

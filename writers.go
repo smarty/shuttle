@@ -35,7 +35,7 @@ func newWriter(serializerFactories map[string]func() Serializer, monitor Monitor
 
 func (this *defaultWriter) Write(response http.ResponseWriter, request *http.Request, result interface{}) {
 	if result == nil {
-		return
+		response.WriteHeader(http.StatusNoContent)
 	} else if handler, ok := result.(http.Handler); ok {
 		handler.ServeHTTP(response, request)
 	} else {

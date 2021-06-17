@@ -14,7 +14,7 @@ func TestShuttleNopConfig(t *testing.T) {
 
 	handler.ServeHTTP(response, request)
 
-	Assert(t).That(response.Code).Equals(200)
+	Assert(t).That(response.Code).Equals(204)
 }
 func TestShuttleDeserialize(t *testing.T) {
 	response := httptest.NewRecorder()
@@ -27,7 +27,7 @@ func TestShuttleDeserialize(t *testing.T) {
 
 	handler.ServeHTTP(response, request)
 
-	Assert(t).That(response.Code).Equals(200)
+	Assert(t).That(response.Code).Equals(204)
 }
 
 func TestShuttleSkipSerialization(t *testing.T) {
@@ -41,7 +41,7 @@ func TestShuttleSkipSerialization(t *testing.T) {
 
 	handler.ServeHTTP(response, request)
 
-	Assert(t).That(response.Code).Equals(200)
+	Assert(t).That(response.Code).Equals(204)
 }
 func TestShuttleDeserializationFailure(t *testing.T) {
 	response := httptest.NewRecorder()
