@@ -93,10 +93,15 @@ func newDeserializeReader(deserializerFactories map[string]func() Deserializer, 
 func (this *deserializeReader) Read(input InputModel, request *http.Request) interface{} {
 	this.monitor.Deserialize()
 
+	var target interface{} = input
+	if value, ok := input.(DeserializeBody); ok {
+		target = value.Body()
+	}
+
 	if deserializer := this.loadDeserializer(request.Header[headerContentType]); deserializer == nil {
 		this.monitor.UnsupportedMediaType()
 		return this.unsupportedMediaTypeResult
-	} else if err := deserializer.Deserialize(input, request.Body); err != nil {
+	} else if err := deserializer.Deserialize(target, request.Body); err != nil {
 		this.monitor.DeserializeFailed()
 		this.result.SetContent(err) // implementations of this may override and no-op SetContent
 		return this.result.Result()

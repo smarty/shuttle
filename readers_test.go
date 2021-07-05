@@ -151,6 +151,8 @@ func (this *FakeInputModel) Validate(errs []error) int {
 	return len(this.validationErrors)
 }
 
+func (this *FakeInputModel) Body() interface{} { return this }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type FakeDeserializer struct {

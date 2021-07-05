@@ -64,6 +64,12 @@ type Writer interface {
 	Write(http.ResponseWriter, *http.Request, interface{})
 }
 
+// DeserializeBody is an interface that is optionally implemented by a given InputModel and is used to provide the
+//  target instance into which the HTTP request body will be deserialized.
+type DeserializeBody interface {
+	Body() interface{}
+}
+
 // Deserializer instances provide the ability to transform an opaque byte stream into an instance of a structure.
 type Deserializer interface {
 	// Deserialize renders the decodes the source stream into the instance provided. If there are any problems, an error is returned.
