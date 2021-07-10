@@ -15,6 +15,9 @@ type TextResult struct {
 	// ContentType, if provided, use this value.
 	ContentType string
 
+	// Headers, if provided, are added to the response
+	Headers map[string][]string
+
 	// Content, if provided, use this value, otherwise no content will be written to the response stream.
 	Content string
 }
@@ -30,6 +33,9 @@ type BinaryResult struct {
 
 	// ContentDisposition, if provided, use this value.
 	ContentDisposition string
+
+	// Headers, if provided, are added to the response
+	Headers map[string][]string
 
 	// Content, if provided, use this value, otherwise no content will be written to the response stream.
 	Content []byte
@@ -47,6 +53,9 @@ type StreamResult struct {
 	// ContentDisposition, if provided, use this value.
 	ContentDisposition string
 
+	// Headers, if provided, are added to the response
+	Headers map[string][]string
+
 	// Content, if provided, use this value, otherwise no content will be written to the response stream.
 	Content io.Reader
 }
@@ -59,6 +68,9 @@ type SerializeResult struct {
 
 	// ContentType, if provided, use this value.
 	ContentType string
+
+	// Headers, if provided, are added to the response
+	Headers map[string][]string
 
 	// Content, if provided, use this value, otherwise no content will be written to the response stream.
 	Content interface{}
@@ -74,6 +86,9 @@ type JSONPResult struct {
 
 	// ContentType, if provided, use this value.
 	ContentType string
+
+	// Headers, if provided, are added to the response
+	Headers map[string][]string
 
 	// Content, if provided, use this value, otherwise no content will be written to the response stream.
 	Content interface{}

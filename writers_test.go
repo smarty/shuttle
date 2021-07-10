@@ -140,6 +140,25 @@ func TestWriteHTTPHandler(t *testing.T) {
 	Assert(t).That(handler.request == request).IsTrue()
 }
 
+func TestSerializeResultWriteHTTPHeaders(t *testing.T) {
+	headers := map[string][]string{
+		"Header-1": {"value1-a", "value1-b"},
+		"Header-2": {"value2-a", "value2-b"},
+	}
+
+	assertHTTPHeaders(t, SerializeResult{Headers: headers})
+	assertHTTPHeaders(t, TextResult{Headers: headers})
+	assertHTTPHeaders(t, BinaryResult{Headers: headers})
+	assertHTTPHeaders(t, StreamResult{Headers: headers})
+	assertHTTPHeaders(t, JSONPResult{Headers: headers})
+}
+func assertHTTPHeaders(t *testing.T, result interface{}) {
+	response := recordResponse(result, "application/json")
+	headers := response.Header()
+	Assert(t).That(headers["Header-1"]).Equals([]string{"value1-a", "value1-b"})
+	Assert(t).That(headers["Header-2"]).Equals([]string{"value2-a", "value2-b"})
+}
+
 type HTTPResponse struct {
 	StatusCode         int
 	ContentType        []string

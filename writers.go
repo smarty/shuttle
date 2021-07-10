@@ -85,6 +85,12 @@ func (this *defaultWriter) write(response http.ResponseWriter, request *http.Req
 func (this *defaultWriter) writeTextResult(response http.ResponseWriter, typed *TextResult) (err error) {
 	this.monitor.TextResult()
 	hasContent := len(typed.Content) > 0
+
+	headers := response.Header()
+	for key, values := range typed.Headers {
+		headers[key] = values
+	}
+
 	this.writeHeader(response, typed.StatusCode, typed.ContentType, "", hasContent)
 	if hasContent {
 		_, err = io.WriteString(response, typed.Content)
@@ -95,6 +101,12 @@ func (this *defaultWriter) writeTextResult(response http.ResponseWriter, typed *
 func (this *defaultWriter) writeBinaryResult(response http.ResponseWriter, typed *BinaryResult) (err error) {
 	this.monitor.BinaryResult()
 	hasContent := len(typed.Content) > 0
+
+	headers := response.Header()
+	for key, values := range typed.Headers {
+		headers[key] = values
+	}
+
 	this.writeHeader(response, typed.StatusCode, typed.ContentType, typed.ContentDisposition, hasContent)
 	if hasContent {
 		_, err = response.Write(typed.Content)
@@ -105,6 +117,12 @@ func (this *defaultWriter) writeBinaryResult(response http.ResponseWriter, typed
 func (this *defaultWriter) writeStreamResult(response http.ResponseWriter, typed *StreamResult) (err error) {
 	this.monitor.StreamResult()
 	hasContent := typed.Content != nil
+
+	headers := response.Header()
+	for key, values := range typed.Headers {
+		headers[key] = values
+	}
+
 	this.writeHeader(response, typed.StatusCode, typed.ContentType, typed.ContentDisposition, hasContent)
 	if hasContent {
 		_, err = io.CopyBuffer(response, typed.Content, this.bodyBuffer)
@@ -120,6 +138,11 @@ func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, re
 	contentType := typed.ContentType
 	if len(contentType) == 0 {
 		contentType = serializer.ContentType()
+	}
+
+	headers := response.Header()
+	for key, values := range typed.Headers {
+		headers[key] = values
 	}
 
 	this.writeHeader(response, typed.StatusCode, contentType, "", hasContent)
@@ -144,6 +167,11 @@ func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, reques
 	contentType := typed.ContentType
 	if len(contentType) == 0 {
 		contentType = mimeTypeApplicationJavascriptUTF8
+	}
+
+	headers := response.Header()
+	for key, values := range typed.Headers {
+		headers[key] = values
 	}
 
 	this.writeHeader(response, typed.StatusCode, contentType, "", true)
