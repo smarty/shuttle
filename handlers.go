@@ -1,7 +1,6 @@
 package shuttle
 
 import (
-	"io"
 	"net/http"
 	"sync"
 )
@@ -36,21 +35,6 @@ func (this *persistentHandler) ServeHTTP(response http.ResponseWriter, request *
 	handler := <-this.buffer
 	defer func() { this.buffer <- handler }()
 	handler.ServeHTTP(response, request)
-}
-func (this *persistentHandler) Close() error {
-	defer func() { close(this.buffer) }()
-
-	for handler := range this.buffer {
-		if closer, ok := handler.(io.Closer); ok {
-			_ = closer.Close()
-		}
-
-		if len(this.buffer) == 0 {
-			break
-		}
-	}
-
-	return nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
