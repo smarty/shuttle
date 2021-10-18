@@ -1,34 +1,84 @@
 package shuttle
 
 import (
+	"io"
 	"net/http"
 	"sync"
 )
 
-type poolHandler struct {
-	pool    *sync.Pool
-	monitor Monitor
+func NewHandler(options ...Option) http.Handler {
+	config := newConfig(options) // throw-away
+	if config.LongLivedPoolCapacity == 0 {
+		return newSemiPersistentHandler(options)
+	}
+
+	return newPersistentHandler(options)
 }
 
-func NewHandler(options ...Option) http.Handler {
-	pool := &sync.Pool{New: func() interface{} {
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type persistentHandler struct {
+	buffer chan http.Handler
+}
+
+func newPersistentHandler(options []Option) http.Handler {
+	config := newConfig(options)
+
+	buffer := make(chan http.Handler, config.LongLivedPoolCapacity)
+	for i := 0; i < config.LongLivedPoolCapacity; i++ {
+		buffer <- newTransientHandlerFromConfig(config)
+	}
+
+	return &persistentHandler{buffer: buffer}
+}
+
+func (this *persistentHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	handler := <-this.buffer
+	defer func() { this.buffer <- handler }()
+	handler.ServeHTTP(response, request)
+}
+func (this *persistentHandler) Close() error {
+	defer func() { close(this.buffer) }()
+
+	for handler := range this.buffer {
+		if closer, ok := handler.(io.Closer); ok {
+			_ = closer.Close()
+		}
+
+		if len(this.buffer) == 0 {
+			break
+		}
+	}
+
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type semiPersistentHandler struct {
+	buffer *sync.Pool
+}
+
+func newSemiPersistentHandler(options []Option) http.Handler {
+	buffer := &sync.Pool{New: func() interface{} {
 		// The config is a "shared nothing" style wherein each handler gets its own configuration values which include
 		// callbacks to stateful error writers and stateful serializers.
-		return newHandlerFromOptions(options)
+		config := newConfig(options)
+		return newTransientHandlerFromConfig(config)
 	}}
 
-	return &poolHandler{pool: pool}
+	return &semiPersistentHandler{buffer: buffer}
 }
 
-func (this *poolHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	handler := this.pool.Get().(http.Handler)
-	defer this.pool.Put(handler)
+func (this *semiPersistentHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	handler := this.buffer.Get().(http.Handler)
+	defer this.buffer.Put(handler)
 	handler.ServeHTTP(response, request)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type defaultHandler struct {
+type transientHandler struct {
 	input     InputModel
 	readers   []Reader
 	processor Processor
@@ -36,9 +86,17 @@ type defaultHandler struct {
 	monitor   Monitor
 }
 
-func newHandler(input InputModel, readers []Reader, processor Processor, writer Writer, monitor Monitor) http.Handler {
+func newTransientHandlerFromConfig(config configuration) http.Handler {
+	readers := make([]Reader, 0, len(config.Readers))
+	for _, readerFactory := range config.Readers {
+		readers = append(readers, readerFactory())
+	}
+
+	return newTransientHandler(config.InputModel(), readers, config.Processor(), config.Writer(), config.Monitor)
+}
+func newTransientHandler(input InputModel, readers []Reader, processor Processor, writer Writer, monitor Monitor) http.Handler {
 	monitor.HandlerCreated()
-	return &defaultHandler{
+	return &transientHandler{
 		input:     input,
 		readers:   readers,
 		processor: processor,
@@ -47,12 +105,12 @@ func newHandler(input InputModel, readers []Reader, processor Processor, writer 
 	}
 }
 
-func (this *defaultHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+func (this *transientHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	this.monitor.RequestReceived()
 	result := this.process(request)
 	this.writer.Write(response, request, result)
 }
-func (this *defaultHandler) process(request *http.Request) interface{} {
+func (this *transientHandler) process(request *http.Request) interface{} {
 	this.input.Reset()
 
 	for _, reader := range this.readers {

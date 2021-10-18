@@ -14,6 +14,7 @@ type configuration struct {
 	ParseForm                   bool
 	Bind                        bool
 	Validate                    bool
+	LongLivedPoolCapacity       int
 	MaxValidationErrors         int
 	Readers                     []func() Reader
 	Writer                      func() Writer
@@ -24,17 +25,6 @@ type configuration struct {
 	BindFailedResult            func() ResultContainer
 	ValidationFailedResult      func() ResultContainer
 	Monitor                     Monitor
-}
-
-func newHandlerFromOptions(options []Option) http.Handler {
-	config := newConfig(options)
-
-	readers := make([]Reader, 0, len(config.Readers))
-	for _, readerFactory := range config.Readers {
-		readers = append(readers, readerFactory())
-	}
-
-	return newHandler(config.InputModel(), readers, config.Processor(), config.Writer(), config.Monitor)
 }
 
 func newConfig(options []Option) configuration {
@@ -130,10 +120,17 @@ func (singleton) Bind(value bool) Option {
 	return func(this *configuration) { this.Bind = value }
 }
 
-// Validate indicates whether or not ask the pool instance of the InputModel associated with this request if it is in a
+// Validate indicates whether or not to ask the pool instance of the InputModel associated with this request if it is in a
 // valid state.
 func (singleton) Validate(value bool) Option {
 	return func(this *configuration) { this.Validate = value }
+}
+
+// LongLivedPoolCapacity indicates that the handler should be managed by a long-lived pool rather than a short-term
+// auto-garbage collected sync.Pool. This means that any pre-allocated resources will share their lifecycle scope with
+// the http.Handler itself. Further, any HTTP requests against an empty pool will block.
+func (singleton) LongLivedPoolCapacity(value uint16) Option {
+	return func(this *configuration) { this.LongLivedPoolCapacity = int(value) }
 }
 
 // MaxValidationErrors indicates the number of unique slots to pre-allocate to receive errors with the pooled input

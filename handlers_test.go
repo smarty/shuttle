@@ -18,7 +18,7 @@ func TestHandler_ReadFailure_RenderErrorToResponse(t *testing.T) {
 	}
 	writer := newFakeCaptureWriter(t, response, request)
 	input := newFakeSequentialInputModel()
-	handler := newHandler(input, readers, nil, writer, &nopMonitor{})
+	handler := newTransientHandler(input, readers, nil, writer, &nopMonitor{})
 
 	handler.ServeHTTP(response, request)
 
@@ -31,7 +31,7 @@ func TestHandler_RenderProcessorResultToResponse(t *testing.T) {
 	writer := newFakeCaptureWriter(t, response, request)
 	input := newFakeSequentialInputModel()
 	processor := newFakeProcessor(t, request.Context(), input, "success")
-	handler := newHandler(input, readers, processor, writer, &nopMonitor{})
+	handler := newTransientHandler(input, readers, processor, writer, &nopMonitor{})
 
 	handler.ServeHTTP(response, request)
 
