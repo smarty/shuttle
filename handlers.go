@@ -6,12 +6,12 @@ import (
 )
 
 func NewHandler(options ...Option) http.Handler {
-	config := newConfig(options) // throw-away
+	config := newConfig(options)
 	if config.LongLivedPoolCapacity == 0 {
 		return newSemiPersistentHandler(options)
 	}
 
-	return newPersistentHandler(options)
+	return newPersistentHandler(config)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20,9 +20,7 @@ type persistentHandler struct {
 	buffer chan http.Handler
 }
 
-func newPersistentHandler(options []Option) http.Handler {
-	config := newConfig(options)
-
+func newPersistentHandler(config configuration) http.Handler {
 	buffer := make(chan http.Handler, config.LongLivedPoolCapacity)
 	for i := 0; i < config.LongLivedPoolCapacity; i++ {
 		buffer <- newTransientHandlerFromConfig(config)
