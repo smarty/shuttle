@@ -109,24 +109,24 @@ func (singleton) Serializer(contentType string, value func() Serializer) Option 
 	return func(this *configuration) { this.Serializers[contentType] = value }
 }
 
-// VerifyAcceptHeader indicates whether or not to inspect the Accept HTTP request header and to assert that it is both
+// VerifyAcceptHeader indicates whether to inspect the Accept HTTP request header and to assert that it is both
 // recognized and understood before continuing further.
 func (singleton) VerifyAcceptHeader(value bool) Option {
 	return func(this *configuration) { this.VerifyAcceptHeader = value }
 }
 
-// ParseForm indicates whether or not to call ParseForm() on the incoming HTTP request.
+// ParseForm indicates whether to call ParseForm() on the incoming HTTP request.
 func (singleton) ParseForm(value bool) Option {
 	return func(this *configuration) { this.ParseForm = value }
 }
 
-// Bind indicates whether or not to forward the raw HTTP request into the InputModel to bind parts of the request onto
+// Bind indicates whether to forward the raw HTTP request into the InputModel to bind parts of the request onto
 // a pooled instanced of the InputModel configured for this route.
 func (singleton) Bind(value bool) Option {
 	return func(this *configuration) { this.Bind = value }
 }
 
-// Validate indicates whether or not to ask the pool instance of the InputModel associated with this request if it is in a
+// Validate indicates whether to ask the pool instance of the InputModel associated with this request if it is in a
 // valid state.
 func (singleton) Validate(value bool) Option {
 	return func(this *configuration) { this.Validate = value }
