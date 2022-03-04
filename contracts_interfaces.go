@@ -135,5 +135,5 @@ const (
 )
 
 var (
-	headerAcceptTypeJavascription = []string{mimeTypeApplicationJavascript}
+	headerAcceptTypeJavascript = []string{mimeTypeApplicationJavascript}
 )

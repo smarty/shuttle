@@ -75,11 +75,10 @@ func (singleton) Deserializer(contentType string, value func() Deserializer) Opt
 
 // DefaultSerializer registers a serializer to be used for requests that do not provide any HTTP Accept request header
 // or for those which contain the wildcard Accept header value of "*/*". If the serializer callback yields an instance
-// with mutable state, then each invocation must given back a unique instance. If the serializer doesn't contain any
+// with mutable state, then each invocation must give back a unique instance. If the serializer doesn't contain any
 // mutable state, then the same instance may be returned between each invocation of the callback provided.
 func (singleton) DefaultSerializer(value func() Serializer) Option {
-	return func(this *configuration) {
-		Options.Serializer(defaultSerializerContentType, value)(this)
+	return func(this *configuration) { Options.Serializer(defaultSerializerContentType, value)(this) }
 	}
 }
 
