@@ -129,7 +129,7 @@ const (
 	headerAccept             = "Accept"
 	headerAcceptAnyValue     = "*/*"
 
-	defaultSerializerContentType  = ""
+	emptyContentType              = ""
 	defaultJSONPCallbackParameter = "callback"
 	defaultJSONPCallbackName      = "callback"
 )

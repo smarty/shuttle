@@ -24,7 +24,7 @@ func newWriter(serializerFactories map[string]func() Serializer, monitor Monitor
 
 	return &defaultWriter{
 		serializers:              serializers,
-		defaultSerializer:        serializers[defaultSerializerContentType],
+		defaultSerializer:        serializers[emptyContentType],
 		monitor:                  monitor,
 		bodyBuffer:               make([]byte, 1024*4),
 		contentTypeBuffer:        make([]string, 1),
