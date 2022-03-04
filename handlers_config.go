@@ -73,13 +73,20 @@ func (singleton) Deserializer(contentType string, value func() Deserializer) Opt
 	return func(this *configuration) { this.Deserializers[contentType] = value }
 }
 
+// DefaultDeserializer registers a deserializer to be used for requests that do not provide any HTTP Accept request header
+// or for those which contain the wildcard Accept header value of "*/*". If the deserializer callback yields an instance
+// with mutable state, then each invocation must give back a unique instance. If the serializer doesn't contain any
+// mutable state, then the same instance may be returned between each invocation of the callback provided.
+func (singleton) DefaultDeserializer(value func() Deserializer) Option {
+	return func(this *configuration) { Options.Deserializer(emptyContentType, value)(this) }
+}
+
 // DefaultSerializer registers a serializer to be used for requests that do not provide any HTTP Accept request header
 // or for those which contain the wildcard Accept header value of "*/*". If the serializer callback yields an instance
 // with mutable state, then each invocation must give back a unique instance. If the serializer doesn't contain any
 // mutable state, then the same instance may be returned between each invocation of the callback provided.
 func (singleton) DefaultSerializer(value func() Serializer) Option {
-	return func(this *configuration) { Options.Serializer(defaultSerializerContentType, value)(this) }
-	}
+	return func(this *configuration) { Options.Serializer(emptyContentType, value)(this) }
 }
 
 // SerializeJSON indicates that the JSON encoder from the Go standard library should be used to serialize results into
