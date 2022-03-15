@@ -179,7 +179,7 @@ func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, reques
 	_, _ = io.WriteString(response, callbackFunction)
 	_, _ = io.WriteString(response, "(")
 	serializer := this.loadSerializer(headerAcceptTypeJavascript)
-	err = serializer.Serialize(response, typed.Content)
+	err = serializer.Serialize(response, typed.Content) // serializes an extra line break
 	_, _ = io.WriteString(response, ")")
 
 	return err
