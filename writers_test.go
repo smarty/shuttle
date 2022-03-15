@@ -90,9 +90,9 @@ func TestWrite(t *testing.T) {
 			Accept:       "application/xml;q=0.8", // simplify and use correct serializer
 			HTTPResponse: HTTPResponse{StatusCode: 200, ContentType: []string{"application/xml; charset=utf-8"}, Body: "{body}"}},
 
-		{Input: &SerializeResult{StatusCode: 201, ContentType: "", Content: "body", CallbackWrapper: true},
+		{Input: &JSONPResult{StatusCode: 201, ContentType: "", Content: "body"},
 			HTTPResponse: HTTPResponse{StatusCode: 201, ContentType: []string{"application/javascript; charset=utf-8"}, Body: "callback({body})"}},
-		{Input: SerializeResult{StatusCode: 201, ContentType: "", Content: "body", CallbackWrapper: true},
+		{Input: JSONPResult{StatusCode: 201, ContentType: "", Content: "body"},
 			HTTPResponse: HTTPResponse{StatusCode: 201, ContentType: []string{"application/javascript; charset=utf-8"}, Body: "callback({body})"}},
 
 		{Input: 42, // use serializer for unknown type
@@ -150,7 +150,7 @@ func TestSerializeResultWriteHTTPHeaders(t *testing.T) {
 	assertHTTPHeaders(t, TextResult{Headers: headers})
 	assertHTTPHeaders(t, BinaryResult{Headers: headers})
 	assertHTTPHeaders(t, StreamResult{Headers: headers})
-	assertHTTPHeaders(t, SerializeResult{Headers: headers})
+	assertHTTPHeaders(t, JSONPResult{Headers: headers})
 }
 func assertHTTPHeaders(t *testing.T, result interface{}) {
 	response := recordResponse(result, "application/json")

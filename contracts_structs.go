@@ -69,9 +69,6 @@ type SerializeResult struct {
 	// ContentType, if provided, use this value.
 	ContentType string
 
-	// CallbackWrapper, if provided, tells instructs serializer to wrap the results in a callback function
-	CallbackWrapper bool
-
 	// Headers, if provided, are added to the response
 	Headers map[string][]string
 
@@ -81,6 +78,21 @@ type SerializeResult struct {
 
 func (this *SerializeResult) SetContent(value interface{}) { this.Content = value }
 func (this *SerializeResult) Result() interface{}          { return this }
+
+// JSONPResult provides the ability render a JSON-P result to the response.
+type JSONPResult struct {
+	// StatusCode, if provided, use this value, otherwise HTTP 200.
+	StatusCode int
+
+	// ContentType, if provided, use this value.
+	ContentType string
+
+	// Headers, if provided, are added to the response
+	Headers map[string][]string
+
+	// Content, if provided, use this value, otherwise no content will be written to the response stream.
+	Content interface{}
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

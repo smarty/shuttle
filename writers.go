@@ -64,6 +64,11 @@ func (this *defaultWriter) write(response http.ResponseWriter, request *http.Req
 	case SerializeResult:
 		this.responseStatus(this.writeSerializeResult(response, request, &typed))
 
+	case *JSONPResult:
+		this.responseStatus(this.writeJSONPResult(response, request, typed))
+	case JSONPResult:
+		this.responseStatus(this.writeJSONPResult(response, request, &typed))
+
 	case string:
 		this.responseStatus(this.writeStringResult(response, typed))
 	case []byte:
@@ -127,11 +132,6 @@ func (this *defaultWriter) writeStreamResult(response http.ResponseWriter, typed
 }
 func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, request *http.Request, typed *SerializeResult) error {
 	this.monitor.SerializeResult()
-
-	if typed.CallbackWrapper {
-		return this.writeJSONPResult(response, request, typed)
-	}
-
 	hasContent := typed.Content != nil
 
 	serializer := this.loadSerializer(request.Header[headerAccept])
@@ -161,7 +161,7 @@ func (this *defaultWriter) loadSerializer(acceptTypes []string) Serializer {
 
 	return this.defaultSerializer
 }
-func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, request *http.Request, typed *SerializeResult) (err error) {
+func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, request *http.Request, typed *JSONPResult) (err error) {
 	callbackFunction := parseJSONPCallbackQueryStringParameter(request.URL.RawQuery)
 
 	contentType := typed.ContentType
