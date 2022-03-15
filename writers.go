@@ -129,7 +129,7 @@ func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, re
 	this.monitor.SerializeResult()
 
 	if typed.CallbackWrapper {
-		return this.writeJSONPResult(response, request, typed)
+		return this.writeWrappedSerializeResult(response, request, typed)
 	}
 
 	hasContent := typed.Content != nil
@@ -161,12 +161,12 @@ func (this *defaultWriter) loadSerializer(acceptTypes []string) Serializer {
 
 	return this.defaultSerializer
 }
-func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, request *http.Request, typed *SerializeResult) (err error) {
-	callbackFunction := parseJSONPCallbackQueryStringParameter(request.URL.RawQuery)
+func (this *defaultWriter) writeWrappedSerializeResult(response http.ResponseWriter, request *http.Request, typed *SerializeResult) (err error) {
+	callbackFunction := parseWrappedCallbackQueryStringParameter(request.URL.RawQuery)
 
 	contentType := typed.ContentType
 	if len(contentType) == 0 {
-		contentType = mimeTypeApplicationJavascriptUTF8
+		contentType = mimeTypeApplicationJavascriptUTF8 // default wrapped content type
 	}
 
 	headers := response.Header()
@@ -184,7 +184,7 @@ func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, reques
 
 	return err
 }
-func parseJSONPCallbackQueryStringParameter(query string) string {
+func parseWrappedCallbackQueryStringParameter(query string) string {
 	var key, value string
 	for len(query) > 0 {
 		key = query
