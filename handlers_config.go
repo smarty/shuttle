@@ -27,7 +27,7 @@ type configuration struct {
 	Monitor                     Monitor
 }
 
-func newConfig(options []Option) configuration {
+func newConfig(options []option) configuration {
 	this := configuration{
 		Deserializers: map[string]func() Deserializer{},
 		Serializers:   map[string]func() Serializer{},
@@ -37,25 +37,25 @@ func newConfig(options []Option) configuration {
 }
 
 // InputModel provides the callback that returns a unique instance on each invocation.
-func (singleton) InputModel(value func() InputModel) Option {
+func (singleton) InputModel(value func() InputModel) option {
 	return func(this *configuration) { this.InputModel = value }
 }
 
 // ProcessorSharedInstance is used when the instance provided has no shared, mutable state and the instance can be
 // shared between all requests.
-func (singleton) ProcessorSharedInstance(value Processor) Option {
+func (singleton) ProcessorSharedInstance(value Processor) option {
 	return Options.Processor(func() Processor { return value })
 }
 
 // Processor is used when an long-lived, reusable, and stateful processor (and associated component tree) is created to
 // service many requests, each request going through a pooled instance of that processor.
-func (singleton) Processor(value func() Processor) Option {
+func (singleton) Processor(value func() Processor) option {
 	return func(this *configuration) { this.Processor = value }
 }
 
 // DeserializeJSON indicates that the JSON decoder from the Go standard library should be used to deserialize HTTP
 // request bodies which contain JSON.
-func (singleton) DeserializeJSON(value bool) Option {
+func (singleton) DeserializeJSON(value bool) option {
 	return func(this *configuration) {
 		if value {
 			Options.Deserializer(mimeTypeApplicationJSON, func() Deserializer { return newJSONDeserializer() })(this)
@@ -69,7 +69,7 @@ func (singleton) DeserializeJSON(value bool) Option {
 // with the content type value provided. If the deserializer contains any shared, mutable state, it must return a unique
 // instance per invocation. If the deserializer only contains immutable state (or no state at all), then invocations of
 // the callback provided may return the same instance.
-func (singleton) Deserializer(contentType string, value func() Deserializer) Option {
+func (singleton) Deserializer(contentType string, value func() Deserializer) option {
 	return func(this *configuration) { this.Deserializers[contentType] = value }
 }
 
@@ -77,7 +77,7 @@ func (singleton) Deserializer(contentType string, value func() Deserializer) Opt
 // or for those which contain the wildcard Accept header value of "*/*". If the deserializer callback yields an instance
 // with mutable state, then each invocation must give back a unique instance. If the serializer doesn't contain any
 // mutable state, then the same instance may be returned between each invocation of the callback provided.
-func (singleton) DefaultDeserializer(value func() Deserializer) Option {
+func (singleton) DefaultDeserializer(value func() Deserializer) option {
 	return func(this *configuration) { Options.Deserializer(emptyContentType, value)(this) }
 }
 
@@ -85,13 +85,13 @@ func (singleton) DefaultDeserializer(value func() Deserializer) Option {
 // or for those which contain the wildcard Accept header value of "*/*". If the serializer callback yields an instance
 // with mutable state, then each invocation must give back a unique instance. If the serializer doesn't contain any
 // mutable state, then the same instance may be returned between each invocation of the callback provided.
-func (singleton) DefaultSerializer(value func() Serializer) Option {
+func (singleton) DefaultSerializer(value func() Serializer) option {
 	return func(this *configuration) { Options.Serializer(emptyContentType, value)(this) }
 }
 
 // SerializeJSON indicates that the JSON encoder from the Go standard library should be used to serialize results into
 // the HTTP response stream using JSON.
-func (singleton) SerializeJSON(value bool) Option {
+func (singleton) SerializeJSON(value bool) option {
 	return func(this *configuration) {
 		if value {
 			Options.Serializer(mimeTypeApplicationJSON, func() Serializer { return newJSONSerializer() })(this)
@@ -105,44 +105,44 @@ func (singleton) SerializeJSON(value bool) Option {
 // with the content type value provided. If the serializer contains any mutable state, it must return a unique instance
 // per invocation. If the serializer only contains immutable state (or no state at all), then invocations of the
 // callback provided may return the same instance.
-func (singleton) Serializer(contentType string, value func() Serializer) Option {
+func (singleton) Serializer(contentType string, value func() Serializer) option {
 	return func(this *configuration) { this.Serializers[contentType] = value }
 }
 
 // VerifyAcceptHeader indicates whether to inspect the Accept HTTP request header and to assert that it is both
 // recognized and understood before continuing further.
-func (singleton) VerifyAcceptHeader(value bool) Option {
+func (singleton) VerifyAcceptHeader(value bool) option {
 	return func(this *configuration) { this.VerifyAcceptHeader = value }
 }
 
 // ParseForm indicates whether to call ParseForm() on the incoming HTTP request.
-func (singleton) ParseForm(value bool) Option {
+func (singleton) ParseForm(value bool) option {
 	return func(this *configuration) { this.ParseForm = value }
 }
 
 // Bind indicates whether to forward the raw HTTP request into the InputModel to bind parts of the request onto
 // a pooled instanced of the InputModel configured for this route.
-func (singleton) Bind(value bool) Option {
+func (singleton) Bind(value bool) option {
 	return func(this *configuration) { this.Bind = value }
 }
 
 // Validate indicates whether to ask the pool instance of the InputModel associated with this request if it is in a
 // valid state.
-func (singleton) Validate(value bool) Option {
+func (singleton) Validate(value bool) option {
 	return func(this *configuration) { this.Validate = value }
 }
 
 // LongLivedPoolCapacity indicates that the handler should be managed by a long-lived pool rather than a short-term
 // auto-garbage collected sync.Pool. This means that any pre-allocated resources will share their lifecycle scope with
 // the http.Handler itself. Further, any HTTP requests against an empty pool will block.
-func (singleton) LongLivedPoolCapacity(value uint16) Option {
+func (singleton) LongLivedPoolCapacity(value uint16) option {
 	return func(this *configuration) { this.LongLivedPoolCapacity = int(value) }
 }
 
 // MaxValidationErrors indicates the number of unique slots to pre-allocate to receive errors with the pooled input
 // model associated with this route. It is suggested to set this value to a large enough number to be able to
 // accommodate the maximum number of errors possible for the InputModel associated with this route.
-func (singleton) MaxValidationErrors(value uint16) Option {
+func (singleton) MaxValidationErrors(value uint16) option {
 	return func(this *configuration) { this.MaxValidationErrors = int(value) }
 }
 
@@ -150,55 +150,55 @@ func (singleton) MaxValidationErrors(value uint16) Option {
 // of the Writer contains any mutable state, then each invocation of the callback must provide a unique instance. If the
 // Writer is stateless or only contains shared, read-only state (along with all of all structures contained therein
 // down the entire object graph), then the same instance can be returned each time.
-func (singleton) Writer(value func() Writer) Option {
+func (singleton) Writer(value func() Writer) option {
 	return func(this *configuration) { this.Writer = value }
 }
 
 // UnsupportedMediaTypeResult registers the result to be written to the underlying HTTP response stream to indicate when
 // the values in the provided Content-Type HTTP request header are not recognized. A single, shared instance of this
 // instance can be provided across all routes.
-func (singleton) UnsupportedMediaTypeResult(value interface{}) Option {
+func (singleton) UnsupportedMediaTypeResult(value interface{}) option {
 	return func(this *configuration) { this.UnsupportedMediaTypeResult = value }
 }
 
 // DeserializationFailedResult registers the result to be written to the underlying HTTP response stream to indicate
 // when the HTTP request body cannot be deserialized into the configured InputModel.
-func (singleton) DeserializationFailedResult(value func() ResultContainer) Option {
+func (singleton) DeserializationFailedResult(value func() ResultContainer) option {
 	return func(this *configuration) { this.DeserializationFailedResult = value }
 }
 
 // ParseFormFailedResult registers the result to be written to the underlying HTTP response stream to indicate when
 // parsing the form and query fields of the HTTP request have failed.
-func (singleton) ParseFormFailedResult(value interface{}) Option {
+func (singleton) ParseFormFailedResult(value interface{}) option {
 	return func(this *configuration) { this.ParseFormFailedResult = value }
 }
 
 // BindFailedResult registers the result to be written to the underlying HTTP response stream to indicate when the HTTP
 // request cannot be properly bound or mapped onto the configured InputModel.
-func (singleton) BindFailedResult(value func() ResultContainer) Option {
+func (singleton) BindFailedResult(value func() ResultContainer) option {
 	return func(this *configuration) { this.BindFailedResult = value }
 }
 
 // ValidationFailedResult registers the result to be written to the underlying HTTP response stream to indicate when the
 // HTTP request contains validation errors according to the provided InputModel.
-func (singleton) ValidationFailedResult(value func() ResultContainer) Option {
+func (singleton) ValidationFailedResult(value func() ResultContainer) option {
 	return func(this *configuration) { this.ValidationFailedResult = value }
 }
 
 // NotAcceptableResult registers the result to be written to the underlying HTTP response stream to indicate when all of
 // the values in the provided Accept HTTP request header are not recognized. A single, shared instance of this
 // instance can be provided across all routes. This must be a TextResult to ensure that it can be properly rendered.
-func (singleton) NotAcceptableResult(value *TextResult) Option {
+func (singleton) NotAcceptableResult(value *TextResult) option {
 	return func(this *configuration) { this.NotAcceptableResult = value }
 }
 
 // Monitor registers a mechanism to watch the internals of the library and to gather metrics when the various behaviors
 // occur.
-func (singleton) Monitor(value Monitor) Option {
+func (singleton) Monitor(value Monitor) option {
 	return func(this *configuration) { this.Monitor = value }
 }
 
-func (singleton) apply(options ...Option) Option {
+func (singleton) apply(options ...option) option {
 	return func(this *configuration) {
 		for _, item := range Options.defaults(options...) {
 			item(this)
@@ -233,8 +233,8 @@ func (singleton) apply(options ...Option) Option {
 		}
 	}
 }
-func (singleton) defaults(options ...Option) []Option {
-	return append([]Option{
+func (singleton) defaults(options ...option) []option {
+	return append([]option{
 		Options.InputModel(func() InputModel { return &nop{} }),
 		Options.ProcessorSharedInstance(&nop{}),
 
@@ -261,7 +261,7 @@ func (singleton) defaults(options ...Option) []Option {
 }
 
 type singleton struct{}
-type Option func(*configuration)
+type option func(*configuration)
 
 var Options singleton
 

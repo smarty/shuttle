@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-func NewHandler(options ...Option) http.Handler {
+func NewHandler(options ...option) http.Handler {
 	config := newConfig(options)
 	if config.LongLivedPoolCapacity == 0 {
 		return newSemiPersistentHandler(options)
@@ -41,7 +41,7 @@ type semiPersistentHandler struct {
 	buffer *sync.Pool
 }
 
-func newSemiPersistentHandler(options []Option) http.Handler {
+func newSemiPersistentHandler(options []option) http.Handler {
 	buffer := &sync.Pool{New: func() interface{} {
 		// The config is a "shared nothing" style wherein each handler gets its own configuration values which include
 		// callbacks to stateful error writers and stateful serializers.
