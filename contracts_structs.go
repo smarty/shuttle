@@ -111,6 +111,9 @@ type InputError struct {
 
 	// Message represents a friendly, user-facing message to indicate why there was a problem with the input.
 	Message string `json:"message,omitempty"`
+
+	// Context represents a error-specific value in the form a serializable instance that the client can use to get more understanding about the error itself.
+	Context any `json:"context,omitempty"`
 }
 
 // InputErrors represents a set of problems with the calling HTTP request.
