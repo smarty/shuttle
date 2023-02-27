@@ -65,7 +65,7 @@ type Writer interface {
 }
 
 // DeserializeBody is an interface that is optionally implemented by a given InputModel and is used to provide the
-//  target instance into which the HTTP request body will be deserialized.
+// target instance into which the HTTP request body will be deserialized.
 type DeserializeBody interface {
 	Body() interface{}
 }
