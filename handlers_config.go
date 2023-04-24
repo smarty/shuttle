@@ -65,6 +65,18 @@ func (singleton) DeserializeJSON(value bool) option {
 	}
 }
 
+// DeserializeXML indicates that the XML decoder from the Go standard library should be used to deserialize HTTP
+// request bodies which contain XML.
+func (singleton) DeserializeXML(value bool) option {
+	return func(this *configuration) {
+		if value {
+			Options.Deserializer(mimeTypeApplicationXML, func() Deserializer { return newXMLDeserializer() })(this)
+		} else {
+			delete(this.Deserializers, mimeTypeApplicationXML)
+		}
+	}
+}
+
 // Deserializer registers a callback which provides a unique instance of a deserializer per invocation and associates it
 // with the content type value provided. If the deserializer contains any shared, mutable state, it must return a unique
 // instance per invocation. If the deserializer only contains immutable state (or no state at all), then invocations of
@@ -97,6 +109,18 @@ func (singleton) SerializeJSON(value bool) option {
 			Options.Serializer(mimeTypeApplicationJSON, func() Serializer { return newJSONSerializer() })(this)
 		} else {
 			delete(this.Serializers, mimeTypeApplicationJSON)
+		}
+	}
+}
+
+// SerializeXML indicates that the XML encoder from the Go standard library should be used to serialize results into
+// the HTTP response stream using XML.
+func (singleton) SerializeXML(value bool) option {
+	return func(this *configuration) {
+		if value {
+			Options.Serializer(mimeTypeApplicationXML, func() Serializer { return newXMLSerializer() })(this)
+		} else {
+			delete(this.Serializers, mimeTypeApplicationXML)
 		}
 	}
 }
@@ -246,6 +270,7 @@ func (singleton) defaults(options ...option) []option {
 
 		Options.SerializeJSON(true),
 		Options.DefaultSerializer(func() Serializer { return newJSONSerializer() }),
+		Options.SerializeXML(true),
 
 		Options.Writer(nil),
 

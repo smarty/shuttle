@@ -118,6 +118,8 @@ var (
 const (
 	mimeTypeApplicationJSON     = "application/json"
 	mimeTypeApplicationJSONUTF8 = mimeTypeApplicationJSON + characterSetUTF8
+	mimeTypeApplicationXML      = "application/xml"
+	mimeTypeApplicationXMLUTF8  = mimeTypeApplicationXML + characterSetUTF8
 
 	mimeTypeApplicationJavascript     = "application/javascript"
 	mimeTypeApplicationJavascriptUTF8 = mimeTypeApplicationJavascript + characterSetUTF8
