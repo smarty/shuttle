@@ -147,7 +147,7 @@ func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, re
 
 	this.writeHeader(response, typed.StatusCode, contentType, "", hasContent)
 	if hasContent {
-		if strings.Contains(request.Header.Get("Accept"), "xml") {
+		if strings.Contains(request.Header.Get("Accept"), "/xml") {
 			this.write(response, request, xmlPrefix)
 		}
 		return serializer.Serialize(response, typed.Content)
