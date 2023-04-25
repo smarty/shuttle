@@ -78,17 +78,17 @@ func TestWrite(t *testing.T) {
 			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/override-default"}, Body: "{body}"}},
 		{Input: &SerializeResult{StatusCode: 422, ContentType: "", Content: "body"},
 			Accept:       "application/xml", // serializer matching this Accept value
-			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/xml; charset=utf-8"}, Body: "{body}"}},
+			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/xml; charset=utf-8"}, Body: string(xmlPrefix) + "{body}"}},
 		{Input: &SerializeResult{StatusCode: 422, ContentType: "application/override-default", Content: "body"},
 			Accept:       "application/xml", // serializer matching this Accept value
-			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/override-default"}, Body: "{body}"}},
+			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/override-default"}, Body: string(xmlPrefix) + "{body}"}},
 		{Input: &SerializeResult{StatusCode: 422, ContentType: "", Content: "body"},
 			Accept:       "application/not-acceptable", // use default serializer
 			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/json; charset=utf-8"}, Body: "{body}"}},
 
 		{Input: &SerializeResult{StatusCode: 200, ContentType: "", Content: "body"},
 			Accept:       "application/xml;q=0.8", // simplify and use correct serializer
-			HTTPResponse: HTTPResponse{StatusCode: 200, ContentType: []string{"application/xml; charset=utf-8"}, Body: "{body}"}},
+			HTTPResponse: HTTPResponse{StatusCode: 200, ContentType: []string{"application/xml; charset=utf-8"}, Body: string(xmlPrefix) + "{body}"}},
 
 		{Input: &JSONPResult{StatusCode: 201, ContentType: "", Content: "body"},
 			HTTPResponse: HTTPResponse{StatusCode: 201, ContentType: []string{"application/javascript; charset=utf-8"}, Body: "callback({body})"}},
