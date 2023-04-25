@@ -139,3 +139,8 @@ const (
 var (
 	headerAcceptTypeJavascript = []string{mimeTypeApplicationJavascript}
 )
+
+var (
+	utf8ByteOrderMark = []byte{239, 187, 191} // http://en.wikipedia.org/wiki/Byte_order_mark
+	xmlPrefix         = append(utf8ByteOrderMark, []byte(`<?xml version="1.0" encoding="utf-8"?>`)...)
+)
