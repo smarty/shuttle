@@ -118,6 +118,8 @@ var (
 const (
 	mimeTypeApplicationJSON     = "application/json"
 	mimeTypeApplicationJSONUTF8 = mimeTypeApplicationJSON + characterSetUTF8
+	mimeTypeApplicationXML      = "application/xml"
+	mimeTypeApplicationXMLUTF8  = mimeTypeApplicationXML + characterSetUTF8
 
 	mimeTypeApplicationJavascript     = "application/javascript"
 	mimeTypeApplicationJavascriptUTF8 = mimeTypeApplicationJavascript + characterSetUTF8
@@ -136,4 +138,9 @@ const (
 
 var (
 	headerAcceptTypeJavascript = []string{mimeTypeApplicationJavascript}
+)
+
+var (
+	utf8ByteOrderMark = []byte{239, 187, 191} // http://en.wikipedia.org/wiki/Byte_order_mark
+	xmlPrefix         = append(utf8ByteOrderMark, []byte(`<?xml version="1.0" encoding="utf-8"?>`)...)
 )

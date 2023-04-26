@@ -58,11 +58,20 @@ func TestDeserializeReader_UnknownContentType_ReturnFailure(t *testing.T) {
 func TestDeserializeReader_DeserializationFailure_ReturnFailure(t *testing.T) {
 	assertDeserializeReader(t, "unsupported-media-type", []string{"application/json"}, errors.New("fail"))
 }
+func TestDeserializeReader_XMLDeserializationFailure_ReturnFailure(t *testing.T) {
+	assertDeserializeReader(t, "unsupported-media-type", []string{"application/xml"}, errors.New("fail"))
+}
 func TestDeserializeReader_KnownContentType_Success(t *testing.T) {
 	assertDeserializeReader(t, nil, []string{"application/json"}, nil)
 }
+func TestDeserializeReader_XMLKnownContentType_Success(t *testing.T) {
+	assertDeserializeReader(t, nil, []string{"application/xml"}, nil)
+}
 func TestDeserializeReader_KnownAdvancedContentType_Success(t *testing.T) {
 	assertDeserializeReader(t, nil, []string{"application/json; charset=utf-8"}, nil)
+}
+func TestDeserializeReader_XMLKnownAdvancedContentType_Success(t *testing.T) {
+	assertDeserializeReader(t, nil, []string{"application/xml; charset=utf-8"}, nil)
 }
 func assertDeserializeReader(t *testing.T, expectedResult interface{}, contentTypes []string, deserializeError error) {
 	input := &FakeInputModel{}
@@ -73,6 +82,7 @@ func assertDeserializeReader(t *testing.T, expectedResult interface{}, contentTy
 	deserializer := &FakeDeserializer{err: deserializeError}
 	factories := map[string]func() Deserializer{
 		"application/json": func() Deserializer { return deserializer },
+		"application/xml":  func() Deserializer { return deserializer },
 	}
 
 	reader := newDeserializeReader(factories, "unsupported-media-type", fakeResult, &nopMonitor{})
