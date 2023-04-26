@@ -119,6 +119,7 @@ func (singleton) SerializeXML(value bool) option {
 	return func(this *configuration) {
 		if value {
 			Options.Serializer(mimeTypeApplicationXML, func() Serializer { return newXMLSerializer() })(this)
+			Options.Serializer(mimeTypeApplicationTextXML, func() Serializer { return newXMLSerializer() })(this)
 		} else {
 			delete(this.Serializers, mimeTypeApplicationXML)
 		}
@@ -269,8 +270,8 @@ func (singleton) defaults(options ...option) []option {
 		Options.MaxValidationErrors(32),
 
 		Options.SerializeJSON(true),
-		Options.DefaultSerializer(func() Serializer { return newJSONSerializer() }),
 		Options.SerializeXML(true),
+		Options.DefaultSerializer(func() Serializer { return newJSONSerializer() }),
 
 		Options.Writer(nil),
 
