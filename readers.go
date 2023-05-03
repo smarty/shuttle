@@ -6,18 +6,26 @@ import (
 )
 
 type acceptReader struct {
-	acceptable map[string][]string
-	result     interface{}
-	monitor    Monitor
+	acceptable                 map[string][]string
+	result                     interface{}
+	useDefaultIfAcceptNotFound bool
+	maxAcceptTypes             int
+	monitor                    Monitor
 }
 
-func newAcceptReader(serializerFactories map[string]func() Serializer, result *TextResult, monitor Monitor) Reader {
+func newAcceptReader(serializerFactories map[string]func() Serializer, result *TextResult, useDefaultIfAcceptNotFound bool, maxAcceptTypes int, monitor Monitor) Reader {
 	acceptable := make(map[string][]string)
 	for acceptType := range serializerFactories {
 		acceptable[acceptType] = []string{acceptType}
 	}
 
-	return &acceptReader{acceptable: acceptable, result: result, monitor: monitor}
+	return &acceptReader{
+		acceptable:                 acceptable,
+		result:                     result,
+		useDefaultIfAcceptNotFound: useDefaultIfAcceptNotFound,
+		maxAcceptTypes:             maxAcceptTypes,
+		monitor:                    monitor,
+	}
 }
 
 func (this *acceptReader) Read(_ InputModel, request *http.Request) interface{} {
@@ -37,6 +45,7 @@ func (this *acceptReader) findAcceptType(acceptTypes []string) ([]string, bool) 
 
 	for _, value := range acceptTypes {
 		var item string
+		acceptTypesIndex := 0
 		for {
 			index := strings.Index(value, ",")
 			if index >= 0 {
@@ -51,10 +60,17 @@ func (this *acceptReader) findAcceptType(acceptTypes []string) ([]string, bool) 
 				return nil, true // default
 			} else if types, contains := this.acceptable[item]; contains {
 				return types, true
+			} else if this.maxAcceptTypes > -1 && this.maxAcceptTypes <= acceptTypesIndex+1 {
+				return nil, true
 			} else if index == -1 {
 				break
 			}
+			acceptTypesIndex++
 		}
+	}
+
+	if this.useDefaultIfAcceptNotFound {
+		return nil, true
 	}
 
 	return nil, false

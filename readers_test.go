@@ -9,24 +9,48 @@ import (
 )
 
 func TestAcceptReader_AcceptTypeProvided_NotFound_ReturnFailure(t *testing.T) {
-	assertAcceptReader(t, "fail", []string{"not-found"}, []string{"not-found"})
+	assertAcceptReader(t, "fail", []string{"not-found"}, []string{"not-found"}, false, -1)
 }
 func TestAcceptReader_NoAcceptTypesProvided_NoError(t *testing.T) {
-	assertAcceptReader(t, "", nil, nil)
+	assertAcceptReader(t, "", nil, nil, false, -1)
 }
 func TestAcceptReader_MultipleAcceptTypesProvided_Found_OverwriteAccept(t *testing.T) {
-	assertAcceptReader(t, "", []string{"not-found-1, found"}, []string{"found"})
+	assertAcceptReader(t, "", []string{"not-found-1, found"}, []string{"found"}, false, -1)
 }
 func TestAcceptReader_MultipleComplexAcceptTypesProvided_Found_OverwriteAccept(t *testing.T) {
-	assertAcceptReader(t, "", []string{"not-found-1, found;q=0, not-found-2"}, []string{"found"})
+	assertAcceptReader(t, "", []string{"not-found-1, found;q=0, not-found-2"}, []string{"found"}, false, -1)
 }
 func TestAcceptReader_WildcardAcceptTypeProvided_Found_OverwriteAccept(t *testing.T) {
-	assertAcceptReader(t, "", []string{"*/*"}, nil)
+	assertAcceptReader(t, "", []string{"*/*"}, nil, false, -1)
 }
 func TestAcceptReader_RealWorldExampleWithWildcard_Found(t *testing.T) {
-	assertAcceptReader(t, "", []string{"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"}, nil)
+	assertAcceptReader(t, "", []string{"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"}, nil, false, -1)
 }
-func assertAcceptReader(t *testing.T, expectedResult string, acceptTypes, acceptTypesWhenSuccessful []string) {
+func TestAcceptReader_UseDefaultIfNotFound_True(t *testing.T) {
+	assertAcceptReader(t, "", []string{"text/html,application/xhtml+xml,application/xml;q=0.9,"}, nil, true, -1)
+}
+func TestAcceptReader_UseDefaultIfNotFound_False(t *testing.T) {
+	assertAcceptReader(t, "fail", []string{"text/html,application/xhtml+xml,application/xml;q=0.9,"}, nil, false, -1)
+}
+func TestAcceptReader_UseDefaultIfNotFound_MaxAcceptTypes(t *testing.T) {
+	assertAcceptReader(t, "", []string{"text/html,application/xhtml+xml,application/xml;q=0.9,"}, nil, true, 1)
+}
+func TestAcceptReader_MaxAcceptTypes_Single(t *testing.T) {
+	assertAcceptReader(t, "", []string{"text/html,application/xhtml+xml,application/xml;q=0.9,"}, nil, false, 1)
+}
+func TestAcceptReader_MaxAcceptTypes_Limit_NotFound(t *testing.T) {
+	assertAcceptReader(t, "", []string{"text/html,application/xhtml+xml,found,application/xml;q=0.9,"}, nil, false, 2)
+}
+func TestAcceptReader_MaxAcceptTypes_Limit_Found(t *testing.T) {
+	assertAcceptReader(t, "", []string{"text/html,application/xhtml+xml,found,application/xml;q=0.9,"}, []string{"found"}, false, 3)
+}
+func TestAcceptReader_MaxAcceptTypes_All(t *testing.T) {
+	assertAcceptReader(t, "fail", []string{"text/html,application/xhtml+xml,application/xml;q=0.9,"}, nil, false, -1)
+}
+func TestAcceptReader_MaxAcceptTypes_All_Found(t *testing.T) {
+	assertAcceptReader(t, "", []string{"text/html,application/xhtml+xml,application/xml;q=0.9,found"}, []string{"found"}, false, -1)
+}
+func assertAcceptReader(t *testing.T, expectedResult string, acceptTypes, acceptTypesWhenSuccessful []string, useDefaultIfNotFound bool, maxTypes int) {
 	request := httptest.NewRequest("GET", "/", nil)
 	request.Header["Accept"] = acceptTypes
 	notAcceptable := &TextResult{Content: expectedResult}
@@ -34,7 +58,7 @@ func assertAcceptReader(t *testing.T, expectedResult string, acceptTypes, accept
 		"found": func() Serializer { return nil },
 	}
 
-	result := newAcceptReader(serializers, notAcceptable, &nopMonitor{}).Read(nil, request)
+	result := newAcceptReader(serializers, notAcceptable, useDefaultIfNotFound, maxTypes, &nopMonitor{}).Read(nil, request)
 
 	if len(expectedResult) == 0 {
 		Assert(t).That(result).IsNil()
