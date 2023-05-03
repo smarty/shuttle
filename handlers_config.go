@@ -14,7 +14,9 @@ type configuration struct {
 	ParseForm                   bool
 	Bind                        bool
 	Validate                    bool
+	DefaultAcceptIfNotFound     bool
 	LongLivedPoolCapacity       int
+	MaxAcceptTypes              int
 	MaxValidationErrors         int
 	Readers                     []func() Reader
 	Writer                      func() Writer
@@ -151,6 +153,17 @@ func (singleton) Bind(value bool) option {
 	return func(this *configuration) { this.Bind = value }
 }
 
+// DefaultAcceptIfNotFound indicates whether to use the default serializer if no Accept types were acceptable.
+func (singleton) DefaultAcceptIfNotFound(value bool) option {
+	return func(this *configuration) { this.DefaultAcceptIfNotFound = value }
+}
+
+// MaxAcceptTypes defines the number of Accept sub values to consider before using the default serializer.
+// A value of -1 means to consider all Accept sub values.
+func (singleton) MaxAcceptTypes(value int) option {
+	return func(this *configuration) { this.MaxAcceptTypes = value }
+}
+
 // Validate indicates whether to ask the pool instance of the InputModel associated with this request if it is in a
 // valid state.
 func (singleton) Validate(value bool) option {
@@ -230,7 +243,9 @@ func (singleton) apply(options ...option) option {
 		}
 
 		if this.VerifyAcceptHeader {
-			this.Readers = append(this.Readers, func() Reader { return newAcceptReader(this.Serializers, this.NotAcceptableResult, this.Monitor) })
+			this.Readers = append(this.Readers, func() Reader {
+				return newAcceptReader(this.Serializers, this.NotAcceptableResult, this.DefaultAcceptIfNotFound, this.MaxAcceptTypes, this.Monitor)
+			})
 		}
 
 		if len(this.Deserializers) > 0 {
@@ -268,6 +283,8 @@ func (singleton) defaults(options ...option) []option {
 		Options.Bind(true),
 		Options.Validate(true),
 		Options.MaxValidationErrors(32),
+		Options.DefaultAcceptIfNotFound(false),
+		Options.MaxAcceptTypes(-1),
 
 		Options.SerializeJSON(true),
 		Options.SerializeXML(true),
