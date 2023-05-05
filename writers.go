@@ -150,6 +150,15 @@ func (this *defaultWriter) writeSerializeResult(response http.ResponseWriter, re
 		if strings.Contains(request.Header.Get("Accept"), "/xml") {
 			this.write(response, request, xmlPrefix)
 		}
+		//TODO: a hack to get jsonp working
+		if callback := request.Form.Get("callback"); len(callback) > 0 {
+			_, _ = io.WriteString(response, callback)
+			_, _ = io.WriteString(response, "(")
+			_serializer := this.loadSerializer(headerAcceptTypeJavascript)
+			err := _serializer.Serialize(response, typed.Content) // serializes an extra line break
+			_, _ = io.WriteString(response, ")")
+			return err
+		}
 		return serializer.Serialize(response, typed.Content)
 	}
 
