@@ -43,7 +43,7 @@ type ResultContainer interface {
 // InputModel provided.
 //
 // Depending upon how the processor is implemented (e.g. stateless and shared vs stateful between unique requests), the
-// result returned can be allocated in the Processor instance and returned or it can be a stateful field somewhere in
+// result returned can be allocated in the Processor instance and returned, or it can be a stateful field somewhere in
 // the Processor's object graph.
 //
 // For Processors that are shared and where each response pathway is stored as a field in the Processor's object graph,
