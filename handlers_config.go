@@ -287,7 +287,7 @@ func (singleton) defaults(options ...option) []option {
 		Options.MaxAcceptTypes(-1),
 
 		Options.SerializeJSON(true),
-		Options.SerializeXML(true),
+		Options.SerializeXML(false),
 		Options.DefaultSerializer(func() Serializer { return newJSONSerializer() }),
 
 		Options.Writer(nil),
