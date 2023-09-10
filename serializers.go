@@ -20,12 +20,14 @@ func newJSONDeserializer() Deserializer {
 func (this *jsonDeserializer) Deserialize(target interface{}, source io.Reader) error {
 	this.source.Reader = source
 
-	if this.decoder.Decode(target) == nil {
-		return nil
+	for {
+		if err := this.decoder.Decode(target); err == io.EOF {
+			return nil
+		} else if err != nil {
+			this.decoder = json.NewDecoder(&this.source)
+			return ErrDeserializationFailure
+		}
 	}
-
-	this.decoder = json.NewDecoder(&this.source)
-	return ErrDeserializationFailure
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

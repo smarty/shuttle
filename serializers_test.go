@@ -30,6 +30,19 @@ func TestJSONDeserializer_ReturnError(t *testing.T) {
 	Assert(t).That(err).Equals(ErrDeserializationFailure)
 	Assert(t).That(value).Equals("")
 }
+func TestJSONDeserializer_CorruptedStream_NewDeserializer(t *testing.T) {
+	var items []uint64
+	deserializer := newJSONDeserializer()
+
+	err := deserializer.Deserialize(&items, bytes.NewBufferString(`[1,2,3]I AM MALFORMED`))
+	Assert(t).That(err).Equals(ErrDeserializationFailure)
+	Assert(t).That(items).Equals([]uint64{1, 2, 3})
+
+	err = deserializer.Deserialize(&items, bytes.NewBufferString(`[1,2,3]`))
+	Assert(t).That(err).IsNil()
+	Assert(t).That(items).Equals([]uint64{1, 2, 3})
+}
+
 func TestXMLDeserializer_ReturnError(t *testing.T) {
 	var value string
 	deserializer := newXMLDeserializer()
