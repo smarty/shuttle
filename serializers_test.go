@@ -30,25 +30,37 @@ func TestJSONDeserializer_ReturnError(t *testing.T) {
 	Assert(t).That(err).Equals(ErrDeserializationFailure)
 	Assert(t).That(value).Equals("")
 }
-func TestJSONDeserializer_CorruptedStream_NewDeserializer(t *testing.T) {
+func TestJSONDeserializer_CorruptedStream_IgnoreMalformedDataAfterValidJSON(t *testing.T) {
 	var items []int
 	deserializer := newJSONDeserializer()
 
 	err := deserializer.Deserialize(&items, bytes.NewBufferString(`[1,2,3]I AM MALFORMED`))
-	Assert(t).That(err).Equals(ErrDeserializationFailure)
+	Assert(t).That(err).IsNil()
 	Assert(t).That(items).Equals([]int{1, 2, 3})
 
 	err = deserializer.Deserialize(&items, bytes.NewBufferString(`[1,2,3]`))
 	Assert(t).That(err).IsNil()
 	Assert(t).That(items).Equals([]int{1, 2, 3})
 }
-func TestJSONDeserializer_CorruptedStream_MultipleValues_UseLast(t *testing.T) {
+func TestJSONDeserializer_CorruptedStream_MultipleValues_UseFirst(t *testing.T) {
 	var items []int
 	deserializer := newJSONDeserializer()
 
 	err := deserializer.Deserialize(&items, bytes.NewBufferString(`[1,2,3] [4,5,6]`))
 	Assert(t).That(err).IsNil()
-	Assert(t).That(items).Equals([]int{4, 5, 6})
+	Assert(t).That(items).Equals([]int{1, 2, 3})
+}
+func TestJSONDeserializer_Multiple_InvocationsWithEmptyBuffer(t *testing.T) {
+	var items []int
+	deserializer := newJSONDeserializer()
+
+	err := deserializer.Deserialize(&items, bytes.NewBufferString(``))
+	Assert(t).That(err).IsNil()
+	Assert(t).That(items).IsNil()
+
+	err = deserializer.Deserialize(&items, bytes.NewBufferString(`[1,2,3]`))
+	Assert(t).That(err).IsNil()
+	Assert(t).That(items).Equals([]int{1, 2, 3})
 }
 
 func TestXMLDeserializer_ReturnError(t *testing.T) {

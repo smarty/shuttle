@@ -6,27 +6,17 @@ import (
 	"io"
 )
 
-type jsonDeserializer struct {
-	decoder *json.Decoder
-	source  struct{ io.Reader }
-}
+type jsonDeserializer struct{}
 
-func newJSONDeserializer() Deserializer {
-	this := &jsonDeserializer{}
-	this.decoder = json.NewDecoder(&this.source)
-	return this
-}
+func newJSONDeserializer() Deserializer { return &jsonDeserializer{} }
 
 func (this *jsonDeserializer) Deserialize(target interface{}, source io.Reader) error {
-	this.source.Reader = source
-
-	for {
-		if err := this.decoder.Decode(target); err == io.EOF {
-			return nil
-		} else if err != nil {
-			this.decoder = json.NewDecoder(&this.source)
-			return ErrDeserializationFailure
-		}
+	if err := json.NewDecoder(source).Decode(target); err == nil {
+		return nil
+	} else if err == io.EOF {
+		return nil
+	} else {
+		return ErrDeserializationFailure
 	}
 }
 
