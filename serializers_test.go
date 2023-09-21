@@ -22,6 +22,7 @@ func TestXMLDeserializer(t *testing.T) {
 	Assert(t).That(err).IsNil()
 	Assert(t).That(value).Equals("hello")
 }
+
 func TestJSONDeserializer_ReturnError(t *testing.T) {
 	var value string
 	deserializer := newJSONDeserializer()
@@ -30,6 +31,15 @@ func TestJSONDeserializer_ReturnError(t *testing.T) {
 	Assert(t).That(err).Equals(ErrDeserializationFailure)
 	Assert(t).That(value).Equals("")
 }
+func TestXMLDeserializer_ReturnError(t *testing.T) {
+	var value string
+	deserializer := newXMLDeserializer()
+	err := deserializer.Deserialize(&value, bytes.NewBufferString(`{`))
+
+	Assert(t).That(err).Equals(ErrDeserializationFailure)
+	Assert(t).That(value).Equals("")
+}
+
 func TestJSONDeserializer_CorruptedStream_IgnoreMalformedDataAfterValidJSON(t *testing.T) {
 	var items []int
 	deserializer := newJSONDeserializer()
@@ -63,14 +73,6 @@ func TestJSONDeserializer_Multiple_InvocationsWithEmptyBuffer(t *testing.T) {
 	Assert(t).That(items).Equals([]int{1, 2, 3})
 }
 
-func TestXMLDeserializer_ReturnError(t *testing.T) {
-	var value string
-	deserializer := newXMLDeserializer()
-	err := deserializer.Deserialize(&value, bytes.NewBufferString(`{`))
-
-	Assert(t).That(err).Equals(ErrDeserializationFailure)
-	Assert(t).That(value).Equals("")
-}
 func TestJSONDeserializer_SuccessAfterFailure(t *testing.T) {
 	var value1, value2 string
 	deserializer := newJSONDeserializer()
@@ -116,6 +118,7 @@ func TestXMLSerializer(t *testing.T) {
 	Assert(t).That(buffer.String()).Equals("<string>hello</string>")
 	Assert(t).That(serializer.ContentType()).Equals("application/xml; charset=utf-8")
 }
+
 func TestJSONSerializer_Failure(t *testing.T) {
 	serializer := newJSONSerializer()
 	buffer := bytes.NewBufferString("")
@@ -134,6 +137,7 @@ func TestXMLSerializer_Failure(t *testing.T) {
 	Assert(t).That(err).Equals(ErrSerializationFailure)
 	Assert(t).That(buffer.Len()).Equals(0)
 }
+
 func TestJSONSerializer_SuccessAfterFailure(t *testing.T) {
 	serializer := newJSONSerializer()
 	buffer := bytes.NewBufferString("")
