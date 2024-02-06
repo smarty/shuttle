@@ -64,11 +64,6 @@ func (this *defaultWriter) write(response http.ResponseWriter, request *http.Req
 	case SerializeResult:
 		this.responseStatus(this.writeSerializeResult(response, request, &typed))
 
-	case *JSONPResult:
-		this.responseStatus(this.writeJSONPResult(response, request, typed))
-	case JSONPResult:
-		this.responseStatus(this.writeJSONPResult(response, request, &typed))
-
 	case string:
 		this.responseStatus(this.writeStringResult(response, typed))
 	case []byte:
@@ -163,60 +158,6 @@ func (this *defaultWriter) loadSerializer(acceptTypes []string) Serializer {
 	}
 
 	return this.defaultSerializer
-}
-func (this *defaultWriter) writeJSONPResult(response http.ResponseWriter, request *http.Request, typed *JSONPResult) (err error) {
-	callbackFunction := parseJSONPCallbackQueryStringParameter(request.URL.RawQuery)
-
-	contentType := typed.ContentType
-	if len(contentType) == 0 {
-		contentType = mimeTypeApplicationJavascriptUTF8
-	}
-
-	headers := response.Header()
-	for key, values := range typed.Headers {
-		headers[key] = values
-	}
-
-	this.writeHeader(response, typed.StatusCode, contentType, "", true)
-
-	_, _ = io.WriteString(response, callbackFunction)
-	_, _ = io.WriteString(response, "(")
-	serializer := this.loadSerializer(headerAcceptTypeJavascript)
-	err = serializer.Serialize(response, typed.Content) // serializes an extra line break
-	_, _ = io.WriteString(response, ")")
-
-	return err
-}
-func parseJSONPCallbackQueryStringParameter(query string) string {
-	var key, value string
-	for len(query) > 0 {
-		key = query
-
-		if i := strings.Index(key, "&"); i >= 0 {
-			key, query = key[:i], key[i+1:]
-		} else {
-			query = ""
-		}
-
-		if i := strings.Index(key, "="); i >= 0 {
-			key, value = key[:i], key[i+1:]
-		}
-
-		if key == defaultJSONPCallbackParameter {
-			return sanitizeJSONPCallbackValue(value)
-		}
-	}
-
-	return defaultJSONPCallbackName
-}
-func sanitizeJSONPCallbackValue(raw string) string {
-	for _, item := range raw {
-		if (item < 'a' || item > 'z') && (item < 'A' || item > 'Z') && (item < '0' || item > '9') && (item != '_') {
-			return defaultJSONPCallbackName
-		}
-	}
-
-	return raw
 }
 
 func (this *defaultWriter) writeStringResult(response http.ResponseWriter, typed string) (err error) {

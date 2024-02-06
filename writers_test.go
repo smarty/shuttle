@@ -90,11 +90,6 @@ func TestWrite(t *testing.T) {
 			Accept:       "application/xml;q=0.8", // simplify and use correct serializer
 			HTTPResponse: HTTPResponse{StatusCode: 200, ContentType: []string{"application/xml; charset=utf-8"}, Body: string(xmlPrefix) + "{body}"}},
 
-		{Input: &JSONPResult{StatusCode: 201, ContentType: "", Content: "body"},
-			HTTPResponse: HTTPResponse{StatusCode: 201, ContentType: []string{"application/javascript; charset=utf-8"}, Body: "callback({body})"}},
-		{Input: JSONPResult{StatusCode: 201, ContentType: "", Content: "body"},
-			HTTPResponse: HTTPResponse{StatusCode: 201, ContentType: []string{"application/javascript; charset=utf-8"}, Body: "callback({body})"}},
-
 		{Input: 42, // use serializer for unknown type
 			HTTPResponse: HTTPResponse{StatusCode: 200, ContentType: []string{"application/json; charset=utf-8"}, Body: "{42}"}},
 	}
@@ -150,7 +145,6 @@ func TestSerializeResultWriteHTTPHeaders(t *testing.T) {
 	assertHTTPHeaders(t, TextResult{Headers: headers})
 	assertHTTPHeaders(t, BinaryResult{Headers: headers})
 	assertHTTPHeaders(t, StreamResult{Headers: headers})
-	assertHTTPHeaders(t, JSONPResult{Headers: headers})
 }
 func assertHTTPHeaders(t *testing.T, result interface{}) {
 	response := recordResponse(result, "application/json")
@@ -164,24 +158,6 @@ type HTTPResponse struct {
 	ContentType        []string
 	ContentDisposition []string
 	Body               string
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-func TestJSONPCallbackQueryStringParsing(t *testing.T) {
-	assertJSONPQueryStringCallback(t, "callback=jsonCallback", "jsonCallback")                           // simple
-	assertJSONPQueryStringCallback(t, "key=&callback=jsonCallback", "jsonCallback")                      // multiple keys
-	assertJSONPQueryStringCallback(t, "key=value&callback=jsonCallback", "jsonCallback")                 // multiple keys and values
-	assertJSONPQueryStringCallback(t, "key=&=value&callback=jsonCallback&other=stuff", "jsonCallback")   // blank keys and values
-	assertJSONPQueryStringCallback(t, "callback=_json_Callback_0123456789", "_json_Callback_0123456789") // complex callback name
-	assertJSONPQueryStringCallback(t, "key=&=value&other=stuff", "callback")                             // doesn't exist, use default
-	assertJSONPQueryStringCallback(t, "callback=malicious!", "callback")                                 // malicious
-	assertJSONPQueryStringCallback(t, "callback=<malicious>", "callback")                                // malicious
-	assertJSONPQueryStringCallback(t, "callback=alert('malicious');", "callback")                        // malicious
-
-}
-func assertJSONPQueryStringCallback(t *testing.T, raw, callback string) {
-	Assert(t).That(parseJSONPCallbackQueryStringParameter(raw)).Equals(callback)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
