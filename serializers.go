@@ -10,7 +10,7 @@ type jsonDeserializer struct{}
 
 func newJSONDeserializer() Deserializer { return &jsonDeserializer{} }
 
-func (this *jsonDeserializer) Deserialize(target interface{}, source io.Reader) error {
+func (this *jsonDeserializer) Deserialize(target any, source io.Reader) error {
 	if err := json.NewDecoder(source).Decode(target); err == nil {
 		return nil
 	} else if err == io.EOF {
@@ -33,7 +33,7 @@ func newJSONSerializer() Serializer {
 	return this
 }
 
-func (this *jsonSerializer) Serialize(target io.Writer, source interface{}) error {
+func (this *jsonSerializer) Serialize(target io.Writer, source any) error {
 	this.target.Writer = target
 
 	if this.encoder.Encode(source) == nil {
@@ -58,7 +58,7 @@ func newXMLDeserializer() Deserializer {
 	return this
 }
 
-func (this *xmlDeserializer) Deserialize(target interface{}, source io.Reader) error {
+func (this *xmlDeserializer) Deserialize(target any, source io.Reader) error {
 	this.source.Reader = source
 
 	if this.decoder.Decode(target) == nil {
@@ -82,7 +82,7 @@ func newXMLSerializer() Serializer {
 	return this
 }
 
-func (this *xmlSerializer) Serialize(target io.Writer, source interface{}) error {
+func (this *xmlSerializer) Serialize(target io.Writer, source any) error {
 	this.target.Writer = target
 
 	if this.encoder.Encode(source) == nil {

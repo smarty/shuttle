@@ -12,7 +12,7 @@ import (
 
 func TestWrite(t *testing.T) {
 	assertions := []struct {
-		Input  interface{}
+		Input  any
 		Accept string
 		HTTPResponse
 	}{
@@ -99,7 +99,7 @@ func TestWrite(t *testing.T) {
 		assertResponse(t, response, assertion.HTTPResponse)
 	}
 }
-func recordResponse(result interface{}, acceptHeader string) *httptest.ResponseRecorder {
+func recordResponse(result any, acceptHeader string) *httptest.ResponseRecorder {
 	writer := newTestWriter()
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", "/", nil)
@@ -146,7 +146,7 @@ func TestSerializeResultWriteHTTPHeaders(t *testing.T) {
 	assertHTTPHeaders(t, BinaryResult{Headers: headers})
 	assertHTTPHeaders(t, StreamResult{Headers: headers})
 }
-func assertHTTPHeaders(t *testing.T, result interface{}) {
+func assertHTTPHeaders(t *testing.T, result any) {
 	response := recordResponse(result, "application/json")
 	headers := response.Header()
 	Assert(t).That(headers["Header-1"]).Equals([]string{"value1-a", "value1-b"})
@@ -180,7 +180,7 @@ func newFakeWriteSerializer(contentType string) Serializer {
 	return FakeWriteSerializer(contentType)
 }
 func (this FakeWriteSerializer) ContentType() string { return string(this) }
-func (this FakeWriteSerializer) Serialize(writer io.Writer, value interface{}) error {
+func (this FakeWriteSerializer) Serialize(writer io.Writer, value any) error {
 	raw, _ := json.Marshal(value)
 	_, _ = io.WriteString(writer, "{"+strings.ReplaceAll(string(raw), `"`, ``)+"}")
 	return nil

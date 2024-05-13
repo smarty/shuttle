@@ -33,7 +33,7 @@ func newWriter(serializerFactories map[string]func() Serializer, monitor Monitor
 	}
 }
 
-func (this *defaultWriter) Write(response http.ResponseWriter, request *http.Request, result interface{}) {
+func (this *defaultWriter) Write(response http.ResponseWriter, request *http.Request, result any) {
 	if result == nil {
 		response.WriteHeader(http.StatusNoContent)
 	} else if handler, ok := result.(http.Handler); ok {
@@ -42,7 +42,7 @@ func (this *defaultWriter) Write(response http.ResponseWriter, request *http.Req
 		this.write(response, request, result)
 	}
 }
-func (this *defaultWriter) write(response http.ResponseWriter, request *http.Request, result interface{}) {
+func (this *defaultWriter) write(response http.ResponseWriter, request *http.Request, result any) {
 	switch typed := result.(type) {
 	case *TextResult:
 		this.responseStatus(this.writeTextResult(response, typed))

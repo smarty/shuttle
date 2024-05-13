@@ -29,13 +29,13 @@ type InputModel interface {
 // InputModel in some fashion or to otherwise short-circuit the request pipeline by returning a result to be rendered
 // the caller's HTTP response stream. If a nil (meaning successful) result is returned, then processing continues.
 type Reader interface {
-	Read(InputModel, *http.Request) interface{}
+	Read(InputModel, *http.Request) any
 }
 
 // ResultContainer sets the content on the underlying instance.
 type ResultContainer interface {
-	SetContent(interface{})
-	Result() interface{}
+	SetContent(any)
+	Result() any
 }
 
 // Processor represents the mechanism used to carry out the desired instruction or user-provided intention. The second
@@ -56,30 +56,30 @@ type ResultContainer interface {
 // and http.ResponseWriter. If the value returned is not one of the aforementioned types, it will be serialized using
 // either the requested HTTP Accept type or it will use the default serializer configured, if any.
 type Processor interface {
-	Process(context.Context, interface{}) interface{}
+	Process(context.Context, any) any
 }
 
 // Writer is responsible to render to result provided to the associated response stream.
 type Writer interface {
-	Write(http.ResponseWriter, *http.Request, interface{})
+	Write(http.ResponseWriter, *http.Request, any)
 }
 
 // DeserializeBody is an interface that is optionally implemented by a given InputModel and is used to provide the
 // target instance into which the HTTP request body will be deserialized.
 type DeserializeBody interface {
-	Body() interface{}
+	Body() any
 }
 
 // Deserializer instances provide the ability to transform an opaque byte stream into an instance of a structure.
 type Deserializer interface {
 	// Deserialize renders the decodes the source stream into the instance provided. If there are any problems, an error is returned.
-	Deserialize(interface{}, io.Reader) error
+	Deserialize(any, io.Reader) error
 }
 
 // Serializer instances provide the ability to transform an instance of a structure into a byte stream.
 type Serializer interface {
 	// Serialize renders the instance provided to the io.Writer. If there are any problems, an error is returned.
-	Serialize(io.Writer, interface{}) error
+	Serialize(io.Writer, any) error
 	// ContentType returns HTTP Content-Type header that will be used when writing to the HTTP response.
 	ContentType() string
 }

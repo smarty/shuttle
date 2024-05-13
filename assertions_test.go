@@ -10,7 +10,7 @@ func Assert(t testingT) *That {
 type That struct{ t testingT }
 
 // That is an intermediate method call, as in: assert.With(t).That(actual).Equals(expected)
-func (this *That) That(actual interface{}) *Assertion {
+func (this *That) That(actual any) *Assertion {
 	return &Assertion{
 		testingT: this.t,
 		actual:   actual,
@@ -19,13 +19,13 @@ func (this *That) That(actual interface{}) *Assertion {
 
 type testingT interface {
 	Helper()
-	Errorf(format string, args ...interface{})
+	Errorf(format string, args ...any)
 }
 
 // Assertion is an intermediate type, not to be instantiated directly.
 type Assertion struct {
 	testingT
-	actual interface{}
+	actual any
 }
 
 // IsNil asserts that the value provided to That is nil.
@@ -49,7 +49,7 @@ func (this *Assertion) IsFalse() {
 }
 
 // Equals asserts that the value provided is equal to the expected value.
-func (this *Assertion) Equals(expected interface{}) {
+func (this *Assertion) Equals(expected any) {
 	this.Helper()
 
 	if !reflect.DeepEqual(this.actual, expected) {

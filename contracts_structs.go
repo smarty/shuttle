@@ -73,11 +73,11 @@ type SerializeResult struct {
 	Headers map[string][]string
 
 	// Content, if provided, use this value, otherwise no content will be written to the response stream.
-	Content interface{}
+	Content any
 }
 
-func (this *SerializeResult) SetContent(value interface{}) { this.Content = value }
-func (this *SerializeResult) Result() interface{}          { return this }
+func (this *SerializeResult) SetContent(value any) { this.Content = value }
+func (this *SerializeResult) Result() any          { return this }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -123,22 +123,22 @@ type fixedResultContainer struct{ ResultContainer }
 type bindErrorContainer struct{ *SerializeResult }
 type validationErrorContainer struct{ *SerializeResult }
 
-func (this *fixedResultContainer) SetContent(interface{}) {} // no-op
-func (this *fixedResultContainer) Result() interface{}    { return this.ResultContainer }
+func (this *fixedResultContainer) SetContent(any) {} // no-op
+func (this *fixedResultContainer) Result() any    { return this.ResultContainer }
 
-func (this *bindErrorContainer) SetContent(value interface{}) {
+func (this *bindErrorContainer) SetContent(value any) {
 	inputErrors := this.SerializeResult.Content.(*InputErrors)
 	inputErrors.Errors = inputErrors.Errors[0:0]
 	inputErrors.Errors = append(inputErrors.Errors, value.(error))
 }
-func (this *bindErrorContainer) Result() interface{} { return this.SerializeResult }
+func (this *bindErrorContainer) Result() any { return this.SerializeResult }
 
-func (this *validationErrorContainer) SetContent(value interface{}) {
+func (this *validationErrorContainer) SetContent(value any) {
 	inputErrors := this.SerializeResult.Content.(*InputErrors)
 	inputErrors.Errors = inputErrors.Errors[0:0]
 	inputErrors.Errors = value.([]error)
 }
-func (this *validationErrorContainer) Result() interface{} { return this.SerializeResult }
+func (this *validationErrorContainer) Result() any { return this.SerializeResult }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -215,7 +215,7 @@ var (
 	}
 )
 
-func _serializeJSON(instance interface{}) string {
+func _serializeJSON(instance any) string {
 	raw, _ := json.Marshal(instance)
 	return string(raw)
 }

@@ -44,14 +44,14 @@ type FakeReader struct {
 	t               *testing.T
 	expectedRequest *http.Request
 	callSequence    int
-	result          interface{}
+	result          any
 }
 
-func newFakeReader(t *testing.T, expectedSequence int, result interface{}, request *http.Request) Reader {
+func newFakeReader(t *testing.T, expectedSequence int, result any, request *http.Request) Reader {
 	return &FakeReader{t: t, callSequence: expectedSequence, result: result, expectedRequest: request}
 }
 
-func (this *FakeReader) Read(input InputModel, request *http.Request) interface{} {
+func (this *FakeReader) Read(input InputModel, request *http.Request) any {
 	sequential := input.(*FakeSequentialInputModel)
 	Assert(this.t).That(this.expectedRequest).Equals(request)
 	Assert(this.t).That(this.callSequence).Equals(sequential.ID)
@@ -73,14 +73,14 @@ func (this *FakeSequentialInputModel) Validate([]error) int     { return 0 }
 type FakeProcessor struct {
 	t             *testing.T
 	expectedCtx   context.Context
-	expectedInput interface{}
-	result        interface{}
+	expectedInput any
+	result        any
 }
 
-func newFakeProcessor(t *testing.T, expectedCtx context.Context, expectedInput, result interface{}) *FakeProcessor {
+func newFakeProcessor(t *testing.T, expectedCtx context.Context, expectedInput, result any) *FakeProcessor {
 	return &FakeProcessor{t: t, expectedCtx: expectedCtx, expectedInput: expectedInput, result: result}
 }
-func (this *FakeProcessor) Process(ctx context.Context, input interface{}) interface{} {
+func (this *FakeProcessor) Process(ctx context.Context, input any) any {
 	Assert(this.t).That(ctx).Equals(this.expectedCtx)
 	Assert(this.t).That(input).Equals(this.expectedInput)
 	return this.result
@@ -92,14 +92,14 @@ type FakeCaptureWriter struct {
 	t        *testing.T
 	response http.ResponseWriter
 	request  *http.Request
-	result   interface{}
+	result   any
 }
 
 func newFakeCaptureWriter(t *testing.T, response http.ResponseWriter, request *http.Request) *FakeCaptureWriter {
 	return &FakeCaptureWriter{t: t, response: response, request: request}
 }
 
-func (this *FakeCaptureWriter) Write(response http.ResponseWriter, request *http.Request, result interface{}) {
+func (this *FakeCaptureWriter) Write(response http.ResponseWriter, request *http.Request, result any) {
 	Assert(this.t).That(response).Equals(this.response)
 	Assert(this.t).That(request).Equals(this.request)
 	this.result = result

@@ -7,7 +7,7 @@ import (
 
 type acceptReader struct {
 	acceptable                 map[string][]string
-	result                     interface{}
+	result                     any
 	useDefaultIfAcceptNotFound bool
 	maxAcceptTypes             int
 	monitor                    Monitor
@@ -28,7 +28,7 @@ func newAcceptReader(serializerFactories map[string]func() Serializer, result *T
 	}
 }
 
-func (this *acceptReader) Read(_ InputModel, request *http.Request) interface{} {
+func (this *acceptReader) Read(_ InputModel, request *http.Request) any {
 	if normalized, found := this.findAcceptType(request.Header[headerAccept]); !found {
 		this.monitor.NotAcceptable()
 		return this.result
@@ -87,12 +87,12 @@ func normalizeMediaType(value string) string {
 
 type deserializeReader struct {
 	available                  map[string]Deserializer
-	unsupportedMediaTypeResult interface{}
+	unsupportedMediaTypeResult any
 	result                     ResultContainer
 	monitor                    Monitor
 }
 
-func newDeserializeReader(deserializerFactories map[string]func() Deserializer, unsupportedMediaTypeResult interface{}, result ResultContainer, monitor Monitor) Reader {
+func newDeserializeReader(deserializerFactories map[string]func() Deserializer, unsupportedMediaTypeResult any, result ResultContainer, monitor Monitor) Reader {
 	available := make(map[string]Deserializer, len(deserializerFactories))
 	for contentType, factory := range deserializerFactories {
 		available[contentType] = factory()
@@ -106,10 +106,10 @@ func newDeserializeReader(deserializerFactories map[string]func() Deserializer, 
 	}
 }
 
-func (this *deserializeReader) Read(input InputModel, request *http.Request) interface{} {
+func (this *deserializeReader) Read(input InputModel, request *http.Request) any {
 	this.monitor.Deserialize()
 
-	var target interface{} = input
+	var target any = input
 	if value, ok := input.(DeserializeBody); ok {
 		target = value.Body()
 	}
@@ -138,18 +138,18 @@ func (this *deserializeReader) loadDeserializer(contentTypes []string) Deseriali
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type parseFormReader struct {
-	result  interface{}
+	result  any
 	monitor Monitor
 }
 
-func newParseFormReader(result interface{}, monitor Monitor) Reader {
+func newParseFormReader(result any, monitor Monitor) Reader {
 	return &parseFormReader{
 		result:  result,
 		monitor: monitor,
 	}
 }
 
-func (this *parseFormReader) Read(_ InputModel, request *http.Request) interface{} {
+func (this *parseFormReader) Read(_ InputModel, request *http.Request) any {
 	this.monitor.ParseForm()
 	if err := request.ParseForm(); err != nil {
 		this.monitor.ParseFormFailed(err)
@@ -170,7 +170,7 @@ func newBindReader(result ResultContainer, monitor Monitor) Reader {
 	return &bindReader{result: result, monitor: monitor}
 }
 
-func (this *bindReader) Read(target InputModel, request *http.Request) interface{} {
+func (this *bindReader) Read(target InputModel, request *http.Request) any {
 	this.monitor.Bind()
 	if err := target.Bind(request); err != nil {
 		this.monitor.BindFailed(err)
@@ -193,7 +193,7 @@ func newValidateReader(result ResultContainer, bufferSize int, monitor Monitor) 
 	return &validateReader{result: result, buffer: make([]error, bufferSize), monitor: monitor}
 }
 
-func (this *validateReader) Read(target InputModel, _ *http.Request) interface{} {
+func (this *validateReader) Read(target InputModel, _ *http.Request) any {
 	this.monitor.Validate()
 	if count := target.Validate(this.buffer); count > 0 {
 		errs := this.buffer[0:count]

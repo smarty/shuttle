@@ -21,9 +21,9 @@ type configuration struct {
 	Readers                     []func() Reader
 	Writer                      func() Writer
 	NotAcceptableResult         *TextResult
-	UnsupportedMediaTypeResult  interface{}
+	UnsupportedMediaTypeResult  any
 	DeserializationFailedResult func() ResultContainer
-	ParseFormFailedResult       interface{}
+	ParseFormFailedResult       any
 	BindFailedResult            func() ResultContainer
 	ValidationFailedResult      func() ResultContainer
 	Monitor                     Monitor
@@ -38,7 +38,7 @@ func newConfig(options []option) configuration {
 	return this
 }
 
-// InputModel provides the callback that returns a unique instance on each invocation.
+// InputModel provides the callback that returns a unique instance of an InputModel on each invocation.
 func (singleton) InputModel(value func() InputModel) option {
 	return func(this *configuration) { this.InputModel = value }
 }
@@ -49,7 +49,7 @@ func (singleton) ProcessorSharedInstance(value Processor) option {
 	return Options.Processor(func() Processor { return value })
 }
 
-// Processor is used when an long-lived, reusable, and stateful processor (and associated component tree) is created to
+// Processor is used when a long-lived, reusable, and stateful processor (and associated component tree) is created to
 // service many requests, each request going through a pooled instance of that processor.
 func (singleton) Processor(value func() Processor) option {
 	return func(this *configuration) { this.Processor = value }
@@ -195,7 +195,7 @@ func (singleton) Writer(value func() Writer) option {
 // UnsupportedMediaTypeResult registers the result to be written to the underlying HTTP response stream to indicate when
 // the values in the provided Content-Type HTTP request header are not recognized. A single, shared instance of this
 // instance can be provided across all routes.
-func (singleton) UnsupportedMediaTypeResult(value interface{}) option {
+func (singleton) UnsupportedMediaTypeResult(value any) option {
 	return func(this *configuration) { this.UnsupportedMediaTypeResult = value }
 }
 
@@ -207,7 +207,7 @@ func (singleton) DeserializationFailedResult(value func() ResultContainer) optio
 
 // ParseFormFailedResult registers the result to be written to the underlying HTTP response stream to indicate when
 // parsing the form and query fields of the HTTP request have failed.
-func (singleton) ParseFormFailedResult(value interface{}) option {
+func (singleton) ParseFormFailedResult(value any) option {
 	return func(this *configuration) { this.ParseFormFailedResult = value }
 }
 
@@ -313,7 +313,7 @@ var Options singleton
 type nop struct{}
 type nopMonitor struct{}
 
-func (*nop) Process(context.Context, interface{}) interface{} { return nil }
+func (*nop) Process(context.Context, any) any { return nil }
 
 func (*nop) Reset()                   {}
 func (*nop) Bind(*http.Request) error { return nil }

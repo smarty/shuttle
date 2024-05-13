@@ -97,7 +97,7 @@ func TestDeserializeReader_KnownAdvancedContentType_Success(t *testing.T) {
 func TestDeserializeReader_XMLKnownAdvancedContentType_Success(t *testing.T) {
 	assertDeserializeReader(t, nil, []string{"application/xml; charset=utf-8"}, nil)
 }
-func assertDeserializeReader(t *testing.T, expectedResult interface{}, contentTypes []string, deserializeError error) {
+func assertDeserializeReader(t *testing.T, expectedResult any, contentTypes []string, deserializeError error) {
 	input := &FakeInputModel{}
 	request := httptest.NewRequest("GET", "/", nil)
 	request.Header["Content-Type"] = contentTypes
@@ -185,17 +185,17 @@ func (this *FakeInputModel) Validate(errs []error) int {
 	return len(this.validationErrors)
 }
 
-func (this *FakeInputModel) Body() interface{} { return this }
+func (this *FakeInputModel) Body() any { return this }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type FakeDeserializer struct {
 	source io.Reader
-	target interface{}
+	target any
 	err    error
 }
 
-func (this *FakeDeserializer) Deserialize(target interface{}, source io.Reader) error {
+func (this *FakeDeserializer) Deserialize(target any, source io.Reader) error {
 	this.target = target
 	this.source = source
 	return this.err
@@ -203,7 +203,7 @@ func (this *FakeDeserializer) Deserialize(target interface{}, source io.Reader) 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type FakeContentResult struct{ value interface{} }
+type FakeContentResult struct{ value any }
 
-func (this *FakeContentResult) SetContent(value interface{}) { this.value = value }
-func (this *FakeContentResult) Result() interface{}          { return this }
+func (this *FakeContentResult) SetContent(value any) { this.value = value }
+func (this *FakeContentResult) Result() any          { return this }

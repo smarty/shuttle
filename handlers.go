@@ -42,7 +42,7 @@ type semiPersistentHandler struct {
 }
 
 func newSemiPersistentHandler(options []option) http.Handler {
-	buffer := &sync.Pool{New: func() interface{} {
+	buffer := &sync.Pool{New: func() any {
 		// The config is a "shared nothing" style wherein each handler gets its own configuration values which include
 		// callbacks to stateful error writers and stateful serializers.
 		config := newConfig(options)
@@ -92,7 +92,7 @@ func (this *transientHandler) ServeHTTP(response http.ResponseWriter, request *h
 	result := this.process(request)
 	this.writer.Write(response, request, result)
 }
-func (this *transientHandler) process(request *http.Request) interface{} {
+func (this *transientHandler) process(request *http.Request) any {
 	this.input.Reset()
 
 	for _, reader := range this.readers {
