@@ -9,6 +9,9 @@ import (
 	"github.com/smarty/shuttle/sample/outputs"
 )
 
+// Processor receives the InputModel, invokes application behavior, and returns the results to be rendered.
+// Generally, the processor will receive some sort of application component which handles the real work
+// of the application, but for this simple example, the domain work happens right here.
 type Processor struct{}
 
 func NewProcessor() *Processor {
