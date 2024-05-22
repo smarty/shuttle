@@ -122,9 +122,6 @@ const (
 	mimeTypeApplicationXMLUTF8  = mimeTypeApplicationXML + characterSetUTF8
 	mimeTypeApplicationTextXML  = "text/xml"
 
-	mimeTypeApplicationJavascript     = "application/javascript"
-	mimeTypeApplicationJavascriptUTF8 = mimeTypeApplicationJavascript + characterSetUTF8
-
 	characterSetUTF8 = "; charset=utf-8"
 
 	headerContentType        = "Content-Type"
@@ -132,13 +129,7 @@ const (
 	headerAccept             = "Accept"
 	headerAcceptAnyValue     = "*/*"
 
-	emptyContentType              = ""
-	defaultJSONPCallbackParameter = "callback"
-	defaultJSONPCallbackName      = "callback"
-)
-
-var (
-	headerAcceptTypeJavascript = []string{mimeTypeApplicationJavascript}
+	emptyContentType = ""
 )
 
 var (
