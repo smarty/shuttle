@@ -4,9 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/smarty/shuttle"
-	"github.com/smarty/shuttle/sample/app"
-	"github.com/smarty/shuttle/sample/inputs"
+	"github.com/smarty/shuttle/v2"
+	"github.com/smarty/shuttle/v2/sample/app"
+	"github.com/smarty/shuttle/v2/sample/inputs"
 )
 
 func main() {

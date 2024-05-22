@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/smarty/shuttle"
+	"github.com/smarty/shuttle/v2"
 )
 
 // Addition represents the data from the client's request.

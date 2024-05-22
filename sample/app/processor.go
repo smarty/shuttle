@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/smarty/shuttle"
-	"github.com/smarty/shuttle/sample/inputs"
-	"github.com/smarty/shuttle/sample/outputs"
+	"github.com/smarty/shuttle/v2"
+	"github.com/smarty/shuttle/v2/sample/inputs"
+	"github.com/smarty/shuttle/v2/sample/outputs"
 )
 
 // Processor receives the InputModel, invokes application behavior, and returns the results to be rendered.

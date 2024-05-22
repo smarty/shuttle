@@ -1,6 +1,6 @@
 package inputs
 
-import "github.com/smarty/shuttle"
+import "github.com/smarty/shuttle/v2"
 
 type Subtraction struct {
 	shuttle.BaseInputModel
