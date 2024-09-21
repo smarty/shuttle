@@ -168,22 +168,20 @@ var (
 			},
 		},
 	}
-	deserializationResultFactory = func() ResultContainer {
-		return &fixedResultContainer{
-			ResultContainer: &SerializeResult{
-				StatusCode: http.StatusBadRequest,
-				Content: InputErrors{
-					Errors: []error{
-						InputError{
-							Fields:  []string{"body"},
-							Name:    "malformed-request-payload",
-							Message: "The body did not contain well-formed data and could not be properly deserialized.",
-						},
-					},
+	deserializationResultFactory = func() ResultContainer { return deserializationResult }
+	deserializationResult        = &fixedResultContainer{ResultContainer: &SerializeResult{
+		StatusCode: http.StatusBadRequest,
+		Content: InputErrors{
+			Errors: []error{
+				InputError{
+					Fields:  []string{"body"},
+					Name:    "malformed-request-payload",
+					Message: "The body did not contain well-formed data and could not be properly deserialized.",
 				},
 			},
-		}
-	}
+		},
+	}}
+
 	parseFormedFailedResult = &SerializeResult{
 		StatusCode: http.StatusBadRequest,
 		Content: InputErrors{
@@ -196,22 +194,20 @@ var (
 			},
 		},
 	}
-	bindErrorResultFactory = func() ResultContainer {
-		return &bindErrorContainer{
-			SerializeResult: &SerializeResult{
-				StatusCode: http.StatusBadRequest,
-				Content:    &InputErrors{},
-			},
-		}
+	bindErrorResultFactory = func() ResultContainer { return bindErrorResult }
+	bindErrorResult        = &bindErrorContainer{
+		SerializeResult: &SerializeResult{
+			StatusCode: http.StatusBadRequest,
+			Content:    &InputErrors{},
+		},
 	}
 
-	validationResultFactory = func() ResultContainer {
-		return &validationErrorContainer{
-			SerializeResult: &SerializeResult{
-				StatusCode: http.StatusUnprocessableEntity,
-				Content:    &InputErrors{},
-			},
-		}
+	validationResultFactory = func() ResultContainer { return validationResult }
+	validationResult        = &validationErrorContainer{
+		SerializeResult: &SerializeResult{
+			StatusCode: http.StatusUnprocessableEntity,
+			Content:    &InputErrors{},
+		},
 	}
 )
 
