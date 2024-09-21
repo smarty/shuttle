@@ -168,8 +168,7 @@ var (
 			},
 		},
 	}
-	deserializationResultFactory = func() ResultContainer { return deserializationResult }
-	deserializationResult        = &fixedResultContainer{ResultContainer: &SerializeResult{
+	deserializationResult = &fixedResultContainer{ResultContainer: &SerializeResult{
 		StatusCode: http.StatusBadRequest,
 		Content: InputErrors{
 			Errors: []error{
@@ -181,7 +180,6 @@ var (
 			},
 		},
 	}}
-
 	parseFormedFailedResult = &SerializeResult{
 		StatusCode: http.StatusBadRequest,
 		Content: InputErrors{
@@ -194,16 +192,13 @@ var (
 			},
 		},
 	}
-	bindErrorResultFactory = func() ResultContainer { return bindErrorResult }
-	bindErrorResult        = &bindErrorContainer{
+	bindErrorResult = &bindErrorContainer{
 		SerializeResult: &SerializeResult{
 			StatusCode: http.StatusBadRequest,
 			Content:    &InputErrors{},
 		},
 	}
-
-	validationResultFactory = func() ResultContainer { return validationResult }
-	validationResult        = &validationErrorContainer{
+	validationResult = &validationErrorContainer{
 		SerializeResult: &SerializeResult{
 			StatusCode: http.StatusUnprocessableEntity,
 			Content:    &InputErrors{},
