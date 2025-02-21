@@ -34,6 +34,8 @@ func newWriter(serializerFactories map[string]func() Serializer, monitor Monitor
 }
 
 func (this *defaultWriter) Write(response http.ResponseWriter, request *http.Request, result any) {
+	response.Header()["Date"] = nil // remove Date header from HTTP response
+
 	if result == nil {
 		response.WriteHeader(http.StatusNoContent)
 	} else if handler, ok := result.(http.Handler); ok {
