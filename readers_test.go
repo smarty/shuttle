@@ -178,10 +178,7 @@ func (this *FakeInputModel) Bind(request *http.Request) error {
 	return this.bindError
 }
 func (this *FakeInputModel) Validate(errs []error) int {
-	for i := range this.validationErrors {
-		errs[i] = this.validationErrors[i]
-	}
-
+	copy(errs, this.validationErrors)
 	return len(this.validationErrors)
 }
 
