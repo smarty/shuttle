@@ -292,12 +292,12 @@ func (singleton) defaults(options ...option) []option {
 
 		Options.Writer(nil),
 
-		Options.NotAcceptableResult(notAcceptableResult),
-		Options.UnsupportedMediaTypeResult(unsupportedMediaTypeResult),
-		Options.ParseFormFailedResult(parseFormedFailedResult),
-		Options.DeserializationFailedResult(func() ResultContainer { return deserializationResult }),
-		Options.BindFailedResult(func() ResultContainer { return bindErrorResult }),
-		Options.ValidationFailedResult(func() ResultContainer { return validationResult }),
+		Options.NotAcceptableResult(notAcceptableResult()),
+		Options.UnsupportedMediaTypeResult(unsupportedMediaTypeResult()),
+		Options.ParseFormFailedResult(parseFormedFailedResult()),
+		Options.DeserializationFailedResult(func() ResultContainer { return deserializationResult() }),
+		Options.BindFailedResult(func() ResultContainer { return bindErrorResult() }),
+		Options.ValidationFailedResult(func() ResultContainer { return validationResult() }),
 
 		Options.Monitor(&nopMonitor{}),
 	}, options...)

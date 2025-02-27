@@ -142,8 +142,8 @@ func (this *validationErrorContainer) Result() any { return this.SerializeResult
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-var (
-	notAcceptableResult = &TextResult{
+func notAcceptableResult() *TextResult {
+	return &TextResult{
 		StatusCode:  http.StatusNotAcceptable,
 		ContentType: mimeTypeApplicationJSONUTF8,
 		Content: _serializeJSON(InputErrors{
@@ -156,7 +156,9 @@ var (
 			},
 		}),
 	}
-	unsupportedMediaTypeResult = &SerializeResult{
+}
+func unsupportedMediaTypeResult() *SerializeResult {
+	return &SerializeResult{
 		StatusCode: http.StatusUnsupportedMediaType,
 		Content: InputErrors{
 			Errors: []error{
@@ -168,7 +170,9 @@ var (
 			},
 		},
 	}
-	deserializationResult = &fixedResultContainer{ResultContainer: &SerializeResult{
+}
+func deserializationResult() *fixedResultContainer {
+	return &fixedResultContainer{ResultContainer: &SerializeResult{
 		StatusCode: http.StatusBadRequest,
 		Content: InputErrors{
 			Errors: []error{
@@ -180,7 +184,9 @@ var (
 			},
 		},
 	}}
-	parseFormedFailedResult = &SerializeResult{
+}
+func parseFormedFailedResult() *SerializeResult {
+	return &SerializeResult{
 		StatusCode: http.StatusBadRequest,
 		Content: InputErrors{
 			Errors: []error{
@@ -192,19 +198,23 @@ var (
 			},
 		},
 	}
-	bindErrorResult = &bindErrorContainer{
+}
+func bindErrorResult() *bindErrorContainer {
+	return &bindErrorContainer{
 		SerializeResult: &SerializeResult{
 			StatusCode: http.StatusBadRequest,
 			Content:    &InputErrors{},
 		},
 	}
-	validationResult = &validationErrorContainer{
+}
+func validationResult() *validationErrorContainer {
+	return &validationErrorContainer{
 		SerializeResult: &SerializeResult{
 			StatusCode: http.StatusUnprocessableEntity,
 			Content:    &InputErrors{},
 		},
 	}
-)
+}
 
 func _serializeJSON(instance any) string {
 	raw, _ := json.Marshal(instance)
