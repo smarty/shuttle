@@ -1,6 +1,7 @@
 package shuttle
 
 import (
+	"cmp"
 	"io"
 	"net/http"
 	"strings"
@@ -123,6 +124,10 @@ func (this *defaultWriter) writeStreamResult(response http.ResponseWriter, typed
 	this.writeHeader(response, typed.StatusCode, typed.ContentType, typed.ContentDisposition, hasContent)
 	if hasContent {
 		_, err = io.CopyBuffer(response, typed.Content, this.bodyBuffer)
+	}
+
+	if closer, ok := typed.Content.(io.Closer); ok {
+		err = cmp.Or(err, closer.Close())
 	}
 
 	return err

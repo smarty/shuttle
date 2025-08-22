@@ -62,6 +62,8 @@ func TestWrite(t *testing.T) {
 			HTTPResponse: HTTPResponse{StatusCode: 404, ContentType: nil, Body: "body"}},
 		{Input: StreamResult{StatusCode: 422, ContentType: "application/custom", Content: bytes.NewBufferString("body")},
 			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/custom"}, Body: "body"}},
+		{Input: StreamResult{StatusCode: 422, ContentType: "application/custom", Content: io.NopCloser(bytes.NewBufferString("body"))},
+			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/custom"}, Body: "body"}},
 		{Input: StreamResult{StatusCode: 422, ContentType: "application/custom", ContentDisposition: "custom-disposition", Content: bytes.NewBufferString("body")},
 			HTTPResponse: HTTPResponse{StatusCode: 422, ContentType: []string{"application/custom"}, ContentDisposition: []string{"custom-disposition"}, Body: "body"}},
 
