@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"iter"
 	"net/http"
 )
 
@@ -84,6 +85,14 @@ type Serializer interface {
 	ContentType() string
 }
 
+// CSV instances provide the ability to render CSV responses
+type CSV interface {
+	// Header returns all the column names for the CSV
+	Header() []string
+	// CSV returns an iterator that returns one row at a time to be rendered to the CSV
+	CSV() iter.Seq[[]string]
+}
+
 type Monitor interface {
 	HandlerCreated()
 	RequestReceived()
@@ -121,6 +130,7 @@ const (
 	mimeTypeApplicationXML      = "application/xml"
 	mimeTypeApplicationXMLUTF8  = mimeTypeApplicationXML + characterSetUTF8
 	mimeTypeApplicationTextXML  = "text/xml"
+	mimeTypeTextCSV             = "text/csv"
 
 	characterSetUTF8 = "; charset=utf-8"
 

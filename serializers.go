@@ -1,6 +1,7 @@
 package shuttle
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"encoding/xml"
 	"io"
@@ -93,3 +94,38 @@ func (this *xmlSerializer) Serialize(target io.Writer, source any) error {
 	return ErrSerializationFailure
 }
 func (this *xmlSerializer) ContentType() string { return mimeTypeApplicationXMLUTF8 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type csvSerializer struct {
+	writer *csv.Writer
+	target struct{ io.Writer }
+}
+
+func newCSVSerializer() Serializer {
+	this := &csvSerializer{}
+	this.writer = csv.NewWriter(&this.target)
+	return this
+}
+
+func (this *csvSerializer) Serialize(target io.Writer, source any) error {
+	csvSource, ok := source.(CSV)
+	if !ok {
+		return ErrSerializationFailure
+	}
+
+	this.target.Writer = target
+
+	if err := this.writer.Write(csvSource.Header()); err != nil {
+		return ErrSerializationFailure
+	}
+	for row := range csvSource.CSV() {
+		if err := this.writer.Write(row); err != nil {
+			return ErrSerializationFailure
+		}
+	}
+	this.writer.Flush()
+	return this.writer.Error()
+}
+
+func (this *csvSerializer) ContentType() string { return mimeTypeTextCSV }

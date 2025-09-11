@@ -128,6 +128,18 @@ func (singleton) SerializeXML(value bool) option {
 	}
 }
 
+// SerializeCSV indicates that the csv encoder from the Go standard library should be used to serialize results into
+// the HTTP response stream. This serializer expects the content being written to implement the CSV interface.
+func (singleton) SerializeCSV(value bool) option {
+	return func(this *configuration) {
+		if value {
+			Options.Serializer(mimeTypeTextCSV, func() Serializer { return newCSVSerializer() })(this)
+		} else {
+			delete(this.Serializers, mimeTypeTextCSV)
+		}
+	}
+}
+
 // Serializer registers a callback which provides a unique instance of a serializer per invocation and associates it
 // with the content type value provided. If the serializer contains any mutable state, it must return a unique instance
 // per invocation. If the serializer only contains immutable state (or no state at all), then invocations of the

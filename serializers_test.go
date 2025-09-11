@@ -3,6 +3,7 @@ package shuttle
 import (
 	"bytes"
 	"errors"
+	"iter"
 	"testing"
 )
 
@@ -118,6 +119,20 @@ func TestXMLSerializer(t *testing.T) {
 	Assert(t).That(buffer.String()).Equals("<string>hello</string>")
 	Assert(t).That(serializer.ContentType()).Equals("application/xml; charset=utf-8")
 }
+func TestCSVSerializer(t *testing.T) {
+	serializer := newCSVSerializer()
+	buffer := bytes.NewBufferString("")
+
+	content := csvContent{
+		headers: []string{"header1", "header2"},
+		data:    [][]string{{"1", "2"}, {"3", "4"}},
+	}
+
+	err := serializer.Serialize(buffer, content)
+	Assert(t).That(err).IsNil()
+	Assert(t).That(buffer.String()).Equals("header1,header2\n1,2\n3,4\n")
+	Assert(t).That(serializer.ContentType()).Equals("text/csv")
+}
 
 func TestJSONSerializer_Failure(t *testing.T) {
 	serializer := newJSONSerializer()
@@ -134,6 +149,14 @@ func TestXMLSerializer_Failure(t *testing.T) {
 
 	err := serializer.Serialize(buffer, make(chan string))
 
+	Assert(t).That(err).Equals(ErrSerializationFailure)
+	Assert(t).That(buffer.Len()).Equals(0)
+}
+func TestCSVSerializer_Failure(t *testing.T) {
+	serializer := newCSVSerializer()
+	buffer := bytes.NewBufferString("")
+
+	err := serializer.Serialize(buffer, "1,2,3")
 	Assert(t).That(err).Equals(ErrSerializationFailure)
 	Assert(t).That(buffer.Len()).Equals(0)
 }
@@ -160,8 +183,43 @@ func TestXMLSerializer_SuccessAfterFailure(t *testing.T) {
 	Assert(t).That(err2).IsNil()
 	Assert(t).That(buffer.String()).Equals("<string>hello</string>")
 }
+func TestCSVSerializer_SuccessAfterFailure(t *testing.T) {
+	serializer := newCSVSerializer()
+	buffer := bytes.NewBufferString("")
+
+	content := csvContent{
+		headers: []string{"header1", "header2"},
+		data:    [][]string{{"1", "2"}, {"3", "4"}},
+	}
+
+	err1 := serializer.Serialize(FakeFailingStream{}, "hello")
+	err2 := serializer.Serialize(buffer, content)
+
+	Assert(t).That(err1).Equals(ErrSerializationFailure)
+	Assert(t).That(err2).IsNil()
+	Assert(t).That(buffer.String()).Equals("header1,header2\n1,2\n3,4\n")
+}
 
 type FakeFailingStream struct{}
 
 func (this FakeFailingStream) Write([]byte) (int, error) { return 0, errors.New("write failure!") }
 func (this FakeFailingStream) Read([]byte) (int, error)  { return 0, errors.New("read failure!") }
+
+type csvContent struct {
+	headers []string
+	data    [][]string
+}
+
+func (this csvContent) Header() []string {
+	return this.headers
+}
+
+func (this csvContent) CSV() iter.Seq[[]string] {
+	return func(yield func([]string) bool) {
+		for _, row := range this.data {
+			if !yield(row) {
+				return
+			}
+		}
+	}
+}
