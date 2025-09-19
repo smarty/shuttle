@@ -108,7 +108,7 @@ func (singleton) DefaultSerializer(value func() Serializer) option {
 func (singleton) SerializeJSON(value bool) option {
 	return func(this *configuration) {
 		if value {
-			Options.Serializer(mimeTypeApplicationJSON, newJSONSerializer)(this)
+			Options.Serializer(mimeTypeApplicationJSON, NewJSONSerializer)(this)
 		} else {
 			delete(this.Serializers, mimeTypeApplicationJSON)
 		}
@@ -133,7 +133,7 @@ func (singleton) SerializeXML(value bool) option {
 func (singleton) SerializeCSV(value bool) option {
 	return func(this *configuration) {
 		if value {
-			Options.Serializer(mimeTypeTextCSV, newCSVSerializer)(this)
+			Options.Serializer(mimeTypeTextCSV, NewCSVSerializer)(this)
 		} else {
 			delete(this.Serializers, mimeTypeTextCSV)
 		}
@@ -300,7 +300,7 @@ func (singleton) defaults(options ...option) []option {
 
 		Options.SerializeJSON(true),
 		Options.SerializeXML(false),
-		Options.DefaultSerializer(newJSONSerializer),
+		Options.DefaultSerializer(NewJSONSerializer),
 
 		Options.Writer(nil),
 

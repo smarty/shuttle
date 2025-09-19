@@ -100,7 +100,7 @@ func TestXMLDeserializer_SuccessAfterFailure(t *testing.T) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func TestJSONSerializer(t *testing.T) {
-	serializer := newJSONSerializer()
+	serializer := NewJSONSerializer()
 	buffer := bytes.NewBufferString("")
 
 	err := serializer.Serialize(buffer, "hello")
@@ -120,7 +120,7 @@ func TestXMLSerializer(t *testing.T) {
 	Assert(t).That(serializer.ContentType()).Equals("application/xml; charset=utf-8")
 }
 func TestCSVSerializer(t *testing.T) {
-	serializer := newCSVSerializer()
+	serializer := NewCSVSerializer()
 	buffer := bytes.NewBufferString("")
 
 	content := csvContent{
@@ -135,7 +135,7 @@ func TestCSVSerializer(t *testing.T) {
 }
 
 func TestJSONSerializer_Failure(t *testing.T) {
-	serializer := newJSONSerializer()
+	serializer := NewJSONSerializer()
 	buffer := bytes.NewBufferString("")
 
 	err := serializer.Serialize(buffer, make(chan string))
@@ -153,7 +153,7 @@ func TestXMLSerializer_Failure(t *testing.T) {
 	Assert(t).That(buffer.Len()).Equals(0)
 }
 func TestCSVSerializer_Failure(t *testing.T) {
-	serializer := newCSVSerializer()
+	serializer := NewCSVSerializer()
 	buffer := bytes.NewBufferString("")
 
 	err := serializer.Serialize(buffer, "1,2,3")
@@ -162,7 +162,7 @@ func TestCSVSerializer_Failure(t *testing.T) {
 }
 
 func TestJSONSerializer_SuccessAfterFailure(t *testing.T) {
-	serializer := newJSONSerializer()
+	serializer := NewJSONSerializer()
 	buffer := bytes.NewBufferString("")
 
 	err1 := serializer.Serialize(FakeFailingStream{}, "hello")
@@ -184,7 +184,7 @@ func TestXMLSerializer_SuccessAfterFailure(t *testing.T) {
 	Assert(t).That(buffer.String()).Equals("<string>hello</string>")
 }
 func TestCSVSerializer_SuccessAfterFailure(t *testing.T) {
-	serializer := newCSVSerializer()
+	serializer := NewCSVSerializer()
 	buffer := bytes.NewBufferString("")
 
 	content := csvContent{

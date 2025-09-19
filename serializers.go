@@ -28,7 +28,7 @@ type jsonSerializer struct {
 	target  struct{ io.Writer }
 }
 
-func newJSONSerializer() Serializer {
+func NewJSONSerializer() Serializer {
 	this := &jsonSerializer{}
 	this.encoder = json.NewEncoder(&this.target)
 	return this
@@ -102,7 +102,7 @@ type csvSerializer struct {
 	target struct{ io.Writer }
 }
 
-func newCSVSerializer() Serializer {
+func NewCSVSerializer() Serializer {
 	this := &csvSerializer{}
 	this.writer = csv.NewWriter(&this.target)
 	return this
